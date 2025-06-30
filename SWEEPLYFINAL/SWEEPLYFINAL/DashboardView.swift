@@ -20,30 +20,35 @@ struct DashboardView: View {
                 ScrollView {
                     VStack(spacing: 16) {
                         // Stats cards
-                        HStack(spacing: 12) {
-                            DashboardOverviewCard(
-                                title: "Jobs Today",
-                                value: "0",
-                                subtitleText: "1 last week",
-                                changeValue: "-14%",
-                                changeDirection: .down,
-                                iconName: "calendar",
-                                iconBackgroundColor: Color(hex: "#E6EEFF"),
-                                iconForegroundColor: Color(hex: "#3B82F6")
-                            )
-                            
-                            DashboardOverviewCard(
-                                title: "Active Clients",
-                                value: "4",
-                                subtitleText: "5 new this week",
-                                changeValue: "+5",
-                                changeDirection: .up,
-                                iconName: "person.2.fill",
-                                iconBackgroundColor: Color(hex: "#E7F7EB"),
-                                iconForegroundColor: Color(hex: "#27AE60")
-                            )
+                        GeometryReader { geometry in
+                            HStack(spacing: 12) {
+                                DashboardOverviewCard(
+                                    title: "Jobs Today",
+                                    value: "0",
+                                    subtitleText: "1 last week",
+                                    changeValue: "-14%",
+                                    changeDirection: .down,
+                                    iconName: "calendar",
+                                    iconBackgroundColor: Color(hex: "#E6EEFF"),
+                                    iconForegroundColor: Color(hex: "#3B82F6")
+                                )
+                                .frame(width: (geometry.size.width - 44) / 2)  // 44 = horizontal padding (16*2) + spacing (12)
+                                
+                                DashboardOverviewCard(
+                                    title: "Active Clients",
+                                    value: "4",
+                                    subtitleText: "5 new this week",
+                                    changeValue: "+5",
+                                    changeDirection: .up,
+                                    iconName: "person.2.fill",
+                                    iconBackgroundColor: Color(hex: "#E7F7EB"),
+                                    iconForegroundColor: Color(hex: "#27AE60")
+                                )
+                                .frame(width: (geometry.size.width - 44) / 2)  // 44 = horizontal padding (16*2) + spacing (12)
+                            }
+                            .padding(.horizontal, 16)
                         }
-                        .padding(.horizontal, 16)
+                        .frame(height: 130)  // Set a fixed height for the cards
                         .padding(.top, 16)
                         
                         // Additional dashboard content would go here

@@ -38,6 +38,7 @@ struct DashboardOverviewCard: View {
                 Text(title)
                     .font(.system(size: 15, weight: .medium))
                     .foregroundColor(Color(hex: "#5E7380"))
+                    .lineLimit(1)
             }
             
             Text(value)
@@ -48,6 +49,7 @@ struct DashboardOverviewCard: View {
                 Text(subtitleText)
                     .font(.system(size: 13))
                     .foregroundColor(Color(hex: "#8B99A6"))
+                    .lineLimit(1)
                 
                 Spacer()
                 
