@@ -50,7 +50,7 @@ struct DashboardView: View {
                     }
                 }
             }
-            .background(Color(UIColor.systemGray6))
+            .background(Color(hex: "#f2f2f2"))
             .navigationBarHidden(true)
         }
     }
