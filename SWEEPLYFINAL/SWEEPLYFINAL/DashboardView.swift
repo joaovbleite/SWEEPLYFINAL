@@ -10,6 +10,7 @@ import SwiftUI
 struct DashboardView: View {
     // Current date
     @State private var currentDate = Date()
+    @State private var showBusinessHealth = false
     
     var body: some View {
         NavigationView {
@@ -150,8 +151,12 @@ struct DashboardView: View {
                                 
                                 Spacer()
                                 
+                                NavigationLink(destination: BusinessHealthView(), isActive: $showBusinessHealth) {
+                                    EmptyView()
+                                }
+                                
                                 Button(action: {
-                                    // View all action
+                                    showBusinessHealth = true
                                 }) {
                                     HStack(spacing: 4) {
                                         Text("View all")
