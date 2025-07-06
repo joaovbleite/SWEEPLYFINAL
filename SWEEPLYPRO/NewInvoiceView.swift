@@ -792,13 +792,16 @@ struct NewInvoiceView: View {
                 // Line items
                 VStack(alignment: .leading, spacing: 16) {
                     HStack {
-                        Image(systemName: "list.bullet.rectangle")
-                            .font(.system(size: 18))
-                            .foregroundColor(primaryColor)
-                            .frame(width: 24)
+                        Text("Product / Service")
+                            .font(.system(size: 20, weight: .medium))
+                            .foregroundColor(defaultTextColor)
                         
-                        Text("Items")
-                            .font(.system(size: 16, weight: .medium))
+                        Spacer()
+                    }
+                    
+                    HStack {
+                        Text("Line items")
+                            .font(.system(size: 24, weight: .semibold))
                             .foregroundColor(defaultTextColor)
                         
                         Spacer()
@@ -806,35 +809,12 @@ struct NewInvoiceView: View {
                         Button(action: {
                             items.append(InvoiceItem(description: "", quantity: 1, rate: 0.0))
                         }) {
-                            Image(systemName: "plus.circle.fill")
+                            Image(systemName: "plus")
                                 .font(.system(size: 20))
-                                .foregroundColor(primaryColor)
+                                .foregroundColor(Color(hex: "#4CAF50"))
+                                .padding(8)
                         }
                     }
-                    
-                    // Header row
-                    HStack(spacing: 8) {
-                        Text("Description")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(mutedTextColor)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        Text("Qty")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(mutedTextColor)
-                            .frame(width: 50, alignment: .center)
-                        
-                        Text("Rate")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(mutedTextColor)
-                            .frame(width: 70, alignment: .center)
-                        
-                        Text("Amount")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(mutedTextColor)
-                            .frame(width: 70, alignment: .trailing)
-                    }
-                    .padding(.horizontal, 12)
                     
                     // Line items
                     ForEach(0..<items.count, id: \.self) { index in
@@ -899,68 +879,90 @@ struct NewInvoiceView: View {
                         }
                     }
                     
-                    // Total
+                    Divider()
+                        .padding(.vertical, 8)
+                    
+                    // Subtotal
                     HStack {
+                        Text("Subtotal")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundColor(defaultTextColor)
+                        
                         Spacer()
                         
-                        VStack(alignment: .trailing, spacing: 8) {
-                            HStack {
-                                Text("Total:")
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(defaultTextColor)
-                                
-                                Text("$\(totalAmount, specifier: "%.2f")")
-                                    .font(.system(size: 18, weight: .bold))
-                                    .foregroundColor(primaryColor)
-                            }
-                        }
-                        .padding(12)
-                        .background(primaryColor.opacity(0.05))
-                        .cornerRadius(12)
-                    }
-                }
-                
-                // Notes
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Notes")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(mutedTextColor)
-                    
-                    HStack(alignment: .top) {
-                        Image(systemName: "note.text")
-                            .font(.system(size: 16))
-                            .foregroundColor(iconColor)
-                            .frame(width: 24)
-                            .padding(.top, 8)
-                        
-                        TextEditor(text: $notes)
-                            .font(.system(size: 16))
+                        Text("$\(totalAmount, specifier: "%.2f")")
+                            .font(.system(size: 24, weight: .semibold))
                             .foregroundColor(defaultTextColor)
-                            .frame(minHeight: 100)
-                            .padding(8)
-                            .background(Color.white)
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(inputBorderColor, lineWidth: 1)
-                            )
-                            .scrollContentBackground(.hidden)
-                            .focused($focusedField, equals: .notes)
                     }
-                    .overlay(
-                        Group {
-                            if notes.isEmpty {
-                                HStack {
-                                    Spacer(minLength: 32)
-                                    Text("Add notes or payment instructions")
-                                        .foregroundColor(placeholderColor)
-                                        .padding(.top, 16)
-                                        .padding(.leading, 8)
-                                    Spacer()
-                                }
-                            }
+                    .padding(.vertical, 8)
+                    
+                    // Discount
+                    HStack {
+                        Text("Discount")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundColor(defaultTextColor)
+                        
+                        Spacer()
+                        
+                        Text("$0.00")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundColor(Color(hex: "#4CAF50"))
+                    }
+                    .padding(.vertical, 8)
+                    
+                    // Tax
+                    HStack {
+                        Text("Tax")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundColor(defaultTextColor)
+                        
+                        Spacer()
+                        
+                        Text("$0.00")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundColor(Color(hex: "#4CAF50"))
+                    }
+                    .padding(.vertical, 8)
+                    
+                    Divider()
+                        .padding(.vertical, 8)
+                        .background(Color(hex: "#F5F5F5"))
+                    
+                    // Total
+                    HStack {
+                        Text("Total")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundColor(defaultTextColor)
+                        
+                        Spacer()
+                        
+                        Text("$\(totalAmount, specifier: "%.2f")")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundColor(defaultTextColor)
+                    }
+                    .padding(.vertical, 8)
+                    .background(Color(hex: "#F5F5F5"))
+                    
+                    Divider()
+                        .padding(.vertical, 16)
+                    
+                    // Client message
+                    HStack {
+                        Text("Client message")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundColor(defaultTextColor)
+                        
+                        Spacer()
+                        
+                        Button(action: {
+                            // Add client message action
+                        }) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 20))
+                                .foregroundColor(Color(hex: "#4CAF50"))
+                                .padding(8)
                         }
-                    )
+                    }
                 }
                 
                 // Save button

@@ -11,47 +11,52 @@ import SwiftData
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [Item]
+    @State private var selectedTab = 0
 
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
+        GeometryReader { geometry in
+            ZStack(alignment: .bottom) {
+                // Simple stack of views with no swipe behavior
+                ZStack {
+                    // Dashboard View (Home)
+                    DashboardView()
+                        .opacity(selectedTab == 0 ? 1 : 0)
+                        .zIndex(selectedTab == 0 ? 1 : 0)
+                    
+                    // Schedule View
+                    TodayScheduleView()
+                        .opacity(selectedTab == 1 ? 1 : 0)
+                        .zIndex(selectedTab == 1 ? 1 : 0)
+                    
+                    // ToDo List View (Hub)
+                    ToDoListView()
+                        .opacity(selectedTab == 3 ? 1 : 0)
+                        .zIndex(selectedTab == 3 ? 1 : 0)
+                    
+                    // More View
+                    MoreView()
+                        .opacity(selectedTab == 4 ? 1 : 0)
+                        .zIndex(selectedTab == 4 ? 1 : 0)
                 }
-                .onDelete(perform: deleteItems)
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
+                .padding(.top, geometry.safeAreaInsets.top) // Add padding for status bar
+                
+                TabBarView(selectedTab: $selectedTab)
+                
+                // Status bar blur overlay
+                VStack {
+                    // Use the actual safe area inset height
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                        .frame(height: geometry.safeAreaInsets.top)
+                        .edgesIgnoringSafeArea(.top)
+                    
+                    Spacer()
                 }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
+                .zIndex(999) // Ensure it's above everything
             }
-        } detail: {
-            Text("Select an item")
+            .background(Color(hex: "#F5F5F5"))
         }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
-            }
-        }
+        .preferredColorScheme(.light)
     }
 }
 

@@ -16,3 +16,25 @@ final class Item {
         self.timestamp = timestamp
     }
 }
+
+// Task model
+@Model
+final class Task {
+    var title: String
+    var taskDescription: String
+    var status: String
+    var priority: String
+    var dueDate: Date?
+    var assignee: String
+    var createdAt: Date
+    
+    init(title: String, taskDescription: String, status: String, priority: String, dueDate: Date?, assignee: String) {
+        self.title = title
+        self.taskDescription = taskDescription
+        self.status = status
+        self.priority = priority
+        self.dueDate = dueDate
+        self.assignee = assignee
+        self.createdAt = Date()
+    }
+}
