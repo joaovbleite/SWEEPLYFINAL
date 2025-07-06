@@ -108,4 +108,4 @@ struct StatusBarPaddingModifier: ViewModifier {
                 .padding(.top, geometry.safeAreaInsets.top)
         }
     }
-} 
+} // Test comment for GitHub auto-push
