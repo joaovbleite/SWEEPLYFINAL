@@ -27,7 +27,10 @@ struct NewQuoteView: View {
     @State private var showAddressFields = false
     @State private var selectedSalesperson = "Joao"
     @State private var showSalespersonPicker = false
-    @State private var items: [QuoteItem] = []
+    @State private var items: [QuoteItem] = [
+        QuoteItem(description: "House Cleaning", quantity: 1, rate: 150.00),
+        QuoteItem(description: "Window Cleaning", quantity: 2, rate: 75.00)
+    ]
     @State private var showAddServiceView = false
     
     // Colors following the app's brand colors
@@ -39,7 +42,7 @@ struct NewQuoteView: View {
     
     @FocusState private var focusedField: Field?
     
-    enum Field {
+    enum Field: Hashable {
         case firstName, lastName, propertyAddress, addressLine2, city, zipCode, phone, email, itemDescription(Int), itemQuantity(Int), itemRate(Int)
     }
     
@@ -1084,4 +1087,56 @@ struct AddDiscountView: View {
 // MARK: - Preview
 #Preview {
     NewQuoteView()
+} 
+
+// MARK: - Salesperson Picker View
+struct SalespersonPickerView: View {
+    @Binding var selectedSalesperson: String
+    let salespeople: [String]
+    @Environment(\.dismiss) private var dismiss
+    
+    // Colors
+    private let primaryColor = Color(hex: "#246BFD")
+    private let textColor = Color(hex: "#1A1A1A")
+    private let mutedTextColor = Color(hex: "#5E7380")
+    private let backgroundColor = Color(hex: "#F5F5F5")
+    
+    var body: some View {
+        NavigationView {
+            List {
+                ForEach(salespeople, id: \.self) { person in
+                    Button(action: {
+                        selectedSalesperson = person
+                        dismiss()
+                    }) {
+                        HStack {
+                            Text(person)
+                                .font(.system(size: 16))
+                                .foregroundColor(textColor)
+                            
+                            Spacer()
+                            
+                            if selectedSalesperson == person {
+                                Image(systemName: "checkmark")
+                                    .foregroundColor(primaryColor)
+                            }
+                        }
+                    }
+                    .listRowBackground(Color.white)
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("Select Salesperson")
+            .navigationBarItems(
+                leading: Button(action: {
+                    dismiss()
+                }) {
+                    Text("Cancel")
+                        .foregroundColor(primaryColor)
+                }
+            )
+            .background(backgroundColor)
+            .listStyle(PlainListStyle())
+        }
+    }
 } 

@@ -46,4 +46,14 @@ extension Color {
             opacity: Double(a) / 255
         )
     }
+}
+
+// Extension to make any view tappable
+extension View {
+    func makeTappable(action: @escaping () -> Void) -> some View {
+        self.contentShape(Rectangle())
+            .onTapGesture {
+                action()
+            }
+    }
 } 
