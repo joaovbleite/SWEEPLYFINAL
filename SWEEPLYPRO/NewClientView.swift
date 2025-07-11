@@ -11,6 +11,19 @@ import UIKit
 import Contacts
 import ContactsUI
 
+// Extension for making views tappable
+extension View {
+    func makeTappable(action: @escaping () -> Void) -> some View {
+        self.overlay(
+            Color.clear
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    action()
+                }
+        )
+    }
+}
+
 // Focus state enum for keyboard focus
 enum FocusField: Hashable {
     case companyName

@@ -73,34 +73,42 @@ struct HubView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 16) {
-                    // Header
-                    headerView
-                    
-                    // Financial summary cards
-                    financialSummaryView
-                    
-                    // Revenue chart
-                    revenueChartView
-                    
-                    // Quick actions
-                    quickActionsView
-                    
-                    // Financial management sections
-                    financialManagementView
-                    
-                    // Team management section
-                    teamManagementView
-                    
-                    // Spacer at bottom for tab bar
-                    Spacer()
-                        .frame(height: 100)
+            ZStack {
+                secondaryColor.ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 20) {
+                        // Header
+                        headerView
+                            .padding(.horizontal, 16)
+                        
+                        // Financial summary cards
+                        financialSummaryView
+                            .padding(.horizontal, 16)
+                        
+                        // Revenue chart
+                        revenueChartView
+                            .padding(.horizontal, 16)
+                        
+                        // Quick actions
+                        quickActionsView
+                            .padding(.horizontal, 16)
+                        
+                        // Financial management sections
+                        financialManagementView
+                            .padding(.horizontal, 16)
+                        
+                        // Team management section
+                        teamManagementView
+                            .padding(.horizontal, 16)
+                        
+                        // Spacer at bottom for tab bar
+                        Spacer()
+                            .frame(height: 100)
+                    }
+                    .padding(.top, 16)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 16)
             }
-            .background(secondaryColor)
             .navigationBarHidden(true)
         }
         .sheet(isPresented: $showFinancialDetails) {
@@ -160,36 +168,83 @@ struct HubView: View {
     
     // MARK: - Header View
     private var headerView: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Financial Hub")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(textColor)
+        VStack(spacing: 16) {
+            // Top row with title and actions
+            HStack {
+                // Title and subtitle
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Financial Hub")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundColor(.white)
+                    
+                    Text("Manage your business finances")
+                        .font(.system(size: 16))
+                        .foregroundColor(.white.opacity(0.8))
+                }
                 
-                Text("Manage your business finances")
-                    .font(.system(size: 16))
-                    .foregroundColor(mutedTextColor)
-            }
-            
-            Spacer()
-            
-            HStack(spacing: 16) {
-                // Notification bell
+                Spacer()
+                
+                // Notification button
                 Button(action: {
-                    // Show notifications
+                    // Action for notifications
                 }) {
-                    ZStack(alignment: .topTrailing) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.2))
+                            .frame(width: 40, height: 40)
+                        
                         Image(systemName: "bell.fill")
-                            .font(.system(size: 20))
-                            .foregroundColor(primaryColor)
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white)
                         
                         // Notification indicator
                         Circle()
-                            .fill(Color(hex: "#F44336"))
-                            .frame(width: 8, height: 8)
-                            .offset(x: 2, y: -2)
+                            .fill(Color.red)
+                            .frame(width: 10, height: 10)
+                            .overlay(
+                                Circle()
+                                    .stroke(primaryColor, lineWidth: 1)
+                            )
+                            .offset(x: 8, y: -8)
                     }
                 }
+                .padding(.trailing, 8)
+                
+                // Profile button
+                Button(action: {
+                    // Action for profile
+                }) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.white.opacity(0.2))
+                            .frame(width: 40, height: 40)
+                        
+                        Image(systemName: "person.crop.circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundColor(.white)
+                    }
+                }
+            }
+            
+            // Search and period selector row
+            HStack(spacing: 12) {
+                // Search field
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 16))
+                        .foregroundColor(mutedTextColor)
+                    
+                    Text("Search transactions, invoices...")
+                        .font(.system(size: 14))
+                        .foregroundColor(mutedTextColor)
+                    
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(Color.white)
+                .cornerRadius(10)
+                .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
                 
                 // Period selector
                 Menu {
@@ -202,23 +257,76 @@ struct HubView: View {
                     HStack(spacing: 4) {
                         Text(selectedPeriod)
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(primaryColor)
+                            .foregroundColor(.white)
                         
                         Image(systemName: "chevron.down")
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(primaryColor)
+                            .foregroundColor(.white)
                     }
                     .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(primaryColor.opacity(0.1))
-                    .cornerRadius(8)
+                    .padding(.vertical, 10)
+                    .background(Color.white.opacity(0.2))
+                    .cornerRadius(10)
                 }
             }
+            
+            // Business summary row
+            HStack(spacing: 20) {
+                // Revenue summary
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Revenue")
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.8))
+                    
+                    Text("$\(String(format: "%.2f", revenue))")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                }
+                
+                // Divider
+                Rectangle()
+                    .fill(Color.white.opacity(0.3))
+                    .frame(width: 1, height: 30)
+                
+                // Profit summary
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Profit")
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.8))
+                    
+                    Text("$\(String(format: "%.2f", profit))")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                }
+                
+                Spacer()
+                
+                // Growth indicator
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.up.right")
+                        .font(.system(size: 12))
+                        .foregroundColor(.white)
+                    
+                    Text("+18%")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 5)
+                .background(Color.white.opacity(0.2))
+                .cornerRadius(20)
+            }
         }
-        .padding(16)
-        .background(cardBgColor)
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+        .padding(20)
+        .background(
+            LinearGradient(
+                gradient: Gradient(colors: [primaryColor, primaryColor.opacity(0.8)]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
+        .cornerRadius(20)
+        .shadow(color: primaryColor.opacity(0.3), radius: 10, x: 0, y: 5)
     }
     
     // MARK: - Financial Summary View
