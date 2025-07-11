@@ -142,10 +142,14 @@ struct TabContentView: View {
                     
                     // Client list
                     ScrollView {
-                        VStack(spacing: 0) {
+                        LazyVStack(spacing: 12) {
                             ForEach(clients) { client in
                                 ClientRow(client: client)
                             }
+                            
+                            // Add extra space at the bottom to prevent content from being covered by the toolbar
+                            Spacer()
+                                .frame(height: 80)
                         }
                     }
                 }
@@ -190,6 +194,10 @@ struct TabContentView: View {
                             ForEach(tasks) { task in
                                 TaskRow(task: task)
                             }
+                            
+                            // Add extra space at the bottom to prevent content from being covered by the toolbar
+                            Spacer()
+                                .frame(height: 80)
                         }
                         .padding(.horizontal, 16)
                     }
@@ -323,32 +331,32 @@ struct ClientRow: View {
                 // Client avatar/icon
                 Circle()
                     .fill(Color(hex: "#EAEAEA"))
-                    .frame(width: 48, height: 48)
+                    .frame(width: 40, height: 40)
                     .overlay(
                         Image(systemName: "person")
-                            .font(.system(size: 20))
+                            .font(.system(size: 16))
                             .foregroundColor(Color(hex: "#666666"))
                     )
                 
                 VStack(alignment: .leading, spacing: 4) {
                     // Client name
                     Text(client.fullName)
-                        .font(.system(size: 22, weight: .medium))
+                        .font(.system(size: 18, weight: .medium))
                         .foregroundColor(Color(hex: "#2D3748"))
                     
                     // Date and address
                     HStack {
                         Text(formattedDate)
-                            .font(.system(size: 20))
+                            .font(.system(size: 14))
                             .foregroundColor(Color(hex: "#718096"))
                         
                         Text("|")
-                            .font(.system(size: 20))
+                            .font(.system(size: 14))
                             .foregroundColor(Color(hex: "#718096"))
-                            .padding(.horizontal, 8)
+                            .padding(.horizontal, 4)
                         
                         Text(client.propertyAddress.isEmpty ? "No address" : client.propertyAddress)
-                            .font(.system(size: 20))
+                            .font(.system(size: 14))
                             .foregroundColor(Color(hex: "#718096"))
                             .lineLimit(1)
                     }
@@ -358,14 +366,17 @@ struct ClientRow: View {
                 
                 // Add chevron icon
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 16))
+                    .font(.system(size: 14))
                     .foregroundColor(Color(hex: "#A0AEC0"))
             }
-            .padding(.vertical, 16)
+            .padding(.vertical, 12)
             .padding(.horizontal, 16)
-            
-            Divider()
         }
+        .background(Color.white)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 6)
         .contentShape(Rectangle())
         .onTapGesture {
             showClientDetail = true

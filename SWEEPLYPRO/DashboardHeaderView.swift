@@ -11,6 +11,7 @@ struct DashboardHeaderView: View {
     @State private var currentDate = Date()
     @State private var notificationCount = 9
     @State private var showNotifications = false
+    @State private var showAIChat = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -24,7 +25,7 @@ struct DashboardHeaderView: View {
                 HStack(spacing: 16) {
                     // Star plus icon
                     Button(action: {
-                        // Favorite action
+                        showAIChat = true
                     }) {
                         Image(systemName: "star.fill")
                             .font(.system(size: 20))
@@ -64,6 +65,9 @@ struct DashboardHeaderView: View {
         .background(Color(hex: "#F5F5F5"))
         .sheet(isPresented: $showNotifications) {
             NotificationsView()
+        }
+        .sheet(isPresented: $showAIChat) {
+            AIChatView()
         }
     }
     

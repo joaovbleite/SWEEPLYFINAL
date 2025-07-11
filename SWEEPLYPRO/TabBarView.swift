@@ -161,7 +161,7 @@ struct TabBarView: View {
                     
                     // Hub tab
                     TabBarButton(
-                        icon: "person.2.fill",
+                        icon: "dollarsign.circle.fill",
                         label: "Hub",
                         isSelected: selectedTab == 3
                     ) {

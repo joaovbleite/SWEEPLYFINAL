@@ -27,8 +27,8 @@ struct ContentView: View {
                     .opacity(selectedTab == 1 ? 1 : 0)
                     .zIndex(selectedTab == 1 ? 1 : 0)
                 
-                // ToDo List View (Hub)
-                ToDoListView()
+                // Hub View (replacing ToDoListView)
+                HubView()
                     .opacity(selectedTab == 3 ? 1 : 0)
                     .zIndex(selectedTab == 3 ? 1 : 0)
                 

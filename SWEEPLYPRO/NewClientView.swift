@@ -226,6 +226,11 @@ struct NewClientView: View {
                     }
                 }
             }
+        case .limited:
+            // Handle limited access (show picker with limited contacts)
+            DispatchQueue.main.async {
+                self.showContactPicker = true
+            }
         @unknown default:
             break
         }
