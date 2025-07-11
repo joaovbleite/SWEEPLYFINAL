@@ -116,7 +116,10 @@ struct NewQuoteView: View {
                     .padding()
             }
             .sheet(isPresented: $showSalespersonPicker) {
-                SalespersonPickerView(selectedSalesperson: $selectedSalesperson, salespeople: salespeople)
+                // Placeholder for salesperson picker view
+                Text("Salesperson Picker View")
+                    .font(.largeTitle)
+                    .padding()
             }
             .sheet(isPresented: $showAddServiceView) {
                 // Placeholder for add service view
@@ -1087,56 +1090,4 @@ struct AddDiscountView: View {
 // MARK: - Preview
 #Preview {
     NewQuoteView()
-} 
-
-// MARK: - Salesperson Picker View
-struct SalespersonPickerView: View {
-    @Binding var selectedSalesperson: String
-    let salespeople: [String]
-    @Environment(\.dismiss) private var dismiss
-    
-    // Colors
-    private let primaryColor = Color(hex: "#246BFD")
-    private let textColor = Color(hex: "#1A1A1A")
-    private let mutedTextColor = Color(hex: "#5E7380")
-    private let backgroundColor = Color(hex: "#F5F5F5")
-    
-    var body: some View {
-        NavigationView {
-            List {
-                ForEach(salespeople, id: \.self) { person in
-                    Button(action: {
-                        selectedSalesperson = person
-                        dismiss()
-                    }) {
-                        HStack {
-                            Text(person)
-                                .font(.system(size: 16))
-                                .foregroundColor(textColor)
-                            
-                            Spacer()
-                            
-                            if selectedSalesperson == person {
-                                Image(systemName: "checkmark")
-                                    .foregroundColor(primaryColor)
-                            }
-                        }
-                    }
-                    .listRowBackground(Color.white)
-                }
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationTitle("Select Salesperson")
-            .navigationBarItems(
-                leading: Button(action: {
-                    dismiss()
-                }) {
-                    Text("Cancel")
-                        .foregroundColor(primaryColor)
-                }
-            )
-            .background(backgroundColor)
-            .listStyle(PlainListStyle())
-        }
-    }
 } 
