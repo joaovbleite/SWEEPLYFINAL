@@ -19,7 +19,10 @@ struct TaskDetailView: View {
     @State private var showNotesExpanded = false
     @State private var showScheduleOptions = false
     @State private var showTeamOptions = false
+    @State private var showEditTask = false
     @State private var notes: String = ""
+    @State private var showCompletionMessage = false
+    @State private var isTaskCompleted = false
     
     // Colors
     let primaryColor = Color(hex: "#153B3F")
@@ -56,6 +59,16 @@ struct TaskDetailView: View {
                     .foregroundColor(primaryColor)
                     .padding(.horizontal, 16)
                     .padding(.top, 4)
+                
+                // Task description
+                if !task.taskDescription.isEmpty {
+                    Text(task.taskDescription)
+                        .font(.system(size: 16))
+                        .foregroundColor(textColor)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                        .padding(.bottom, 4)
+                }
                 
                 // Schedule section
                 VStack(alignment: .leading, spacing: 4) {
@@ -235,12 +248,12 @@ struct TaskDetailView: View {
         .background(backgroundColor)
         .navigationBarHidden(true)
         .onAppear {
-            // Initialize notes from task description
+            // Initialize notes with task description
             notes = task.taskDescription
         }
         .confirmationDialog("Task Options", isPresented: $showActionSheet, titleVisibility: .hidden) {
-            Button("Edit Task") {
-                // Edit task action would go here
+            Button("Edit Task", role: .none) {
+                showEditTask = true
             }
             Button("Delete Task", role: .destructive) {
                 deleteTask()
@@ -255,6 +268,36 @@ struct TaskDetailView: View {
             TeamOptionsView(task: task, modelContext: modelContext)
                 .presentationDetents([.medium])
         }
+        .fullScreenCover(isPresented: $showEditTask) {
+            NewTaskView(task: task)
+        }
+        .overlay(
+            Group {
+                if showCompletionMessage {
+                    VStack {
+                        Spacer()
+                        
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(.white)
+                            
+                            Text("Task completed successfully and archived")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white)
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 14)
+                        .background(greenColor)
+                        .cornerRadius(10)
+                        .shadow(color: Color.black.opacity(0.2), radius: 5, x: 0, y: 2)
+                        .padding(.bottom, 20)
+                    }
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .animation(.easeInOut, value: showCompletionMessage)
+                }
+            }
+        )
     }
     
     // Function to mark task as completed
@@ -264,12 +307,18 @@ struct TaskDetailView: View {
         // Save changes to SwiftData
         do {
             try modelContext.save()
+            
+            // Show completion message and mark task as completed
+            isTaskCompleted = true
+            showCompletionMessage = true
+            
+            // Dismiss the view after a short delay to allow the user to see the message
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                presentationMode.wrappedValue.dismiss()
+            }
         } catch {
             print("Failed to complete task: \(error)")
         }
-        
-        // Dismiss the view
-        presentationMode.wrappedValue.dismiss()
     }
     
     // Function to delete the task
@@ -307,70 +356,60 @@ struct ScheduleOptionsView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
-                List {
-                    Button(action: {
-                        task.dueDate = nil
-                        saveChanges()
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                        Text("Unscheduled")
-                            .font(.system(size: 17))
-                            .foregroundColor(.primary)
-                    }
-                    
-                    Button(action: {
-                        task.dueDate = Calendar.current.startOfDay(for: Date())
-                        saveChanges()
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                        Text("Today")
-                            .font(.system(size: 17))
-                            .foregroundColor(.primary)
-                    }
-                    
-                    Button(action: {
-                        task.dueDate = Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: Date()))
-                        saveChanges()
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                        Text("Tomorrow")
-                            .font(.system(size: 17))
-                            .foregroundColor(.primary)
-                    }
-                    
-                    Button(action: {
-                        showDatePicker = true
-                    }) {
-                        Text("Custom Date")
-                            .font(.system(size: 17))
-                            .foregroundColor(.primary)
-                    }
-                }
-                .listStyle(InsetGroupedListStyle())
-                
                 if showDatePicker {
-                    DatePicker(
-                        "Select a date",
-                        selection: $selectedDate,
-                        displayedComponents: [.date]
-                    )
-                    .datePickerStyle(GraphicalDatePickerStyle())
-                    .padding()
-                    
-                    Button(action: {
-                        task.dueDate = selectedDate
-                        saveChanges()
-                        presentationMode.wrappedValue.dismiss()
-                    }) {
-                        Text("Set Date")
-                            .font(.system(size: 17, weight: .medium))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(Color(hex: "#4CAF50"))
-                            .cornerRadius(8)
+                    VStack(spacing: 16) {
+                        DatePicker(
+                            "Select a date",
+                            selection: $selectedDate,
+                            displayedComponents: [.date]
+                        )
+                        .datePickerStyle(GraphicalDatePickerStyle())
+                        .padding(.horizontal)
+                        .padding(.top)
+                        
+                        // Removed the "Set Date" button here
                     }
-                    .padding()
+                } else {
+                    List {
+                        Button(action: {
+                            task.dueDate = nil
+                            saveChanges()
+                            presentationMode.wrappedValue.dismiss()
+                        }) {
+                            Text("Unscheduled")
+                                .font(.system(size: 17))
+                                .foregroundColor(.primary)
+                        }
+                        
+                        Button(action: {
+                            task.dueDate = Calendar.current.startOfDay(for: Date())
+                            saveChanges()
+                            presentationMode.wrappedValue.dismiss()
+                        }) {
+                            Text("Today")
+                                .font(.system(size: 17))
+                                .foregroundColor(.primary)
+                        }
+                        
+                        Button(action: {
+                            task.dueDate = Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: Date()))
+                            saveChanges()
+                            presentationMode.wrappedValue.dismiss()
+                        }) {
+                            Text("Tomorrow")
+                                .font(.system(size: 17))
+                                .foregroundColor(.primary)
+                        }
+                        
+                        Button(action: {
+                            showDatePicker = true
+                        }) {
+                            Text("Custom Date")
+                                .font(.system(size: 17))
+                                .foregroundColor(.primary)
+                        }
+                    }
+                    .listStyle(InsetGroupedListStyle())
                 }
             }
             .navigationTitle("Schedule")
@@ -381,8 +420,19 @@ struct ScheduleOptionsView: View {
                         presentationMode.wrappedValue.dismiss()
                     }
                 }
+                if showDatePicker {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Set") {
+                            task.dueDate = selectedDate
+                            saveChanges()
+                            presentationMode.wrappedValue.dismiss()
+                        }
+                    }
+                }
             }
         }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
     }
     
     private func saveChanges() {

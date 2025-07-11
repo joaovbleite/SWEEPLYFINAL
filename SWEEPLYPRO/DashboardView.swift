@@ -18,10 +18,13 @@ struct DashboardView: View {
                     DashboardHeaderView()
                     
                     // Content sections
-                    VStack(spacing: 24) {
+                    VStack(spacing: 16) {
                         // Today's Schedule section
                         TodayScheduleView()
-                            .padding(.top, 16)
+                            .padding(.top, 12)
+                        
+                        // Daily Overview section
+                        DailyOverviewView()
                         
                         // To Do List section
                         ToDoListView()
@@ -31,20 +34,123 @@ struct DashboardView: View {
                         
                         // Discover section
                         DiscoverView()
-                            .padding(.bottom, 150) // Added padding at the bottom
+                            .padding(.bottom, 120) // Reduced padding at the bottom
                     }
-                    .padding(.horizontal, 8) // Reduced from 12 to 8
+                    .padding(.horizontal, 8)
                 }
                 .background(Color(hex: "#F5F5F5"))
             }
-            .background(Color(hex: "#F5F5F5")) // Keep background color for ScrollView
-            .edgesIgnoringSafeArea(.bottom) // Only ignore safe area at the bottom
+            .background(Color(hex: "#F5F5F5"))
+            .edgesIgnoringSafeArea(.bottom)
             
             // Tab Bar
             TabBarView(selectedTab: $selectedTab)
                 .ignoresSafeArea(.all, edges: .bottom)
         }
-        .background(Color(hex: "#F5F5F5")) // Keep background color for entire view
+        .background(Color(hex: "#F5F5F5"))
+    }
+}
+
+// Daily Overview section
+struct DailyOverviewView: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // Section header
+            Text("Daily Overview")
+                .font(.system(size: 20, weight: .bold))
+                .foregroundColor(Color(hex: "#0A0A0A"))
+                .padding(.horizontal, 8)
+                .padding(.bottom, 2)
+            
+            // Overview cards
+            VStack(spacing: 8) {
+                // First row
+                HStack(spacing: 8) {
+                    // Jobs Completed card
+                    CompactOverviewCard(
+                        title: "Jobs Completed",
+                        value: "3/8",
+                        iconName: "checkmark.circle.fill",
+                        gradient: [Color(hex: "#246BFD").opacity(0.8), Color(hex: "#246BFD")]
+                    )
+                    
+                    // Hours Worked today card
+                    CompactOverviewCard(
+                        title: "Hours Worked",
+                        value: "5.2 hrs",
+                        iconName: "clock.fill",
+                        gradient: [Color(hex: "#4CAF50").opacity(0.8), Color(hex: "#4CAF50")]
+                    )
+                }
+                
+                // Second row - 1 card
+                CompactOverviewCard(
+                    title: "Today's Priority",
+                    value: "Complete project",
+                    subtitle: "Due in 2 hours",
+                    iconName: "star.fill",
+                    gradient: [Color(hex: "#FF9800").opacity(0.8), Color(hex: "#FF9800")],
+                    isWide: true
+                )
+            }
+            .padding(.horizontal, 8)
+        }
+    }
+}
+
+// Compact Overview Card with modern design
+struct CompactOverviewCard: View {
+    let title: String
+    let value: String
+    var subtitle: String? = nil
+    let iconName: String
+    let gradient: [Color]
+    var isWide: Bool = false
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            // Smaller icon with gradient background
+            ZStack {
+                Circle()
+                    .fill(LinearGradient(
+                        gradient: Gradient(colors: gradient),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ))
+                    .frame(width: 26, height: 26)
+                
+                Image(systemName: iconName)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.white)
+            }
+            .padding(.leading, 2)
+            
+            // Text content with more space
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(Color(hex: "#5D6A76"))
+                
+                Text(value)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(Color(hex: "#0A0A0A"))
+                
+                if let subtitle = subtitle {
+                    Text(subtitle)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(Color(hex: "#5D6A76"))
+                }
+            }
+            
+            Spacer()
+        }
+        .padding(.vertical, 10)
+        .padding(.horizontal, 10)
+        .background(Color.white)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .frame(maxWidth: .infinity)
+        .frame(height: subtitle != nil ? 80 : 70)
     }
 }
 

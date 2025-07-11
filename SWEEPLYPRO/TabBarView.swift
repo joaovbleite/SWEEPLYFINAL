@@ -39,6 +39,7 @@ struct TabBarView: View {
     @State private var showNewTaskView = false
     @State private var showNewClientView = false
     @State private var showNewInvoiceView = false
+    @State private var showNewQuoteView = false
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -85,10 +86,11 @@ struct TabBarView: View {
                     ActionButton(
                         label: "Quote",
                         icon: "doc.badge.gearshape.fill",
-                        iconColor: Color(hex: "#9747FF")
+                        iconColor: Color(hex: "#246BFD")
                     ) {
                         // Handle Quote action
                         showActionMenu = false
+                        showNewQuoteView = true
                     }
                     
                     // Client button
@@ -224,6 +226,9 @@ struct TabBarView: View {
         }
         .sheet(isPresented: $showNewInvoiceView) {
             NewInvoiceView()
+        }
+        .sheet(isPresented: $showNewQuoteView) {
+            NewQuoteView()
         }
         .safeAreaInset(edge: .bottom) {
             Color.clear.frame(height: 0)

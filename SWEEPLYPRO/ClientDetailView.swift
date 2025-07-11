@@ -7,6 +7,8 @@
 
 import SwiftUI
 import SwiftData
+import MapKit
+import CoreLocation
 
 struct ClientDetailView: View {
     @Environment(\.presentationMode) var presentationMode
@@ -14,6 +16,12 @@ struct ClientDetailView: View {
     
     // State variables
     @State private var selectedTab = 0
+    @State private var isEditContactDetailsPresented = false
+    
+    // Computed property to check if billing address is the same as property address
+    private var isBillingSameAsProperty: Bool {
+        return client.billingAddress.isEmpty || client.billingAddress == client.propertyAddress
+    }
     
     // Tab options
     let tabs = ["Client", "Work", "Notes"]
@@ -124,6 +132,9 @@ struct ClientDetailView: View {
         }
         .background(backgroundColor)
         .navigationBarHidden(true)
+        .sheet(isPresented: $isEditContactDetailsPresented) {
+            EditContactDetailsView(client: client)
+        }
     }
     
     // Client tab content
@@ -161,18 +172,29 @@ struct ClientDetailView: View {
             
             Divider()
             
-            // Property and address sections
-            if !client.propertyAddress.isEmpty {
-                propertyCard
-            } else {
-                // Empty property state
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Property")
-                        .font(.system(size: 24, weight: .bold))
+            // Property section
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    Text(isBillingSameAsProperty ? "Property and Billing address" : "Property")
+                        .font(.system(size: 20, weight: .semibold))
                         .foregroundColor(textColor)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 16)
                     
+                    Spacer()
+                    
+                    Button(action: {
+                        // Action to add property
+                    }) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 20))
+                            .foregroundColor(greenColor)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+                
+                if !client.propertyAddress.isEmpty {
+                    propertyCard
+                } else {
                     Text("No properties added")
                         .font(.system(size: 16))
                         .foregroundColor(mutedTextColor)
@@ -180,28 +202,81 @@ struct ClientDetailView: View {
                         .padding(.bottom, 16)
                 }
             }
+            
+            Divider()
+            
+            // Billing address section - only show if different from property address
+            if !isBillingSameAsProperty {
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack {
+                        Text("Billing address")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(textColor)
+                        
+                        Spacer()
+                        
+                        Button(action: {
+                            // Action to edit billing address
+                        }) {
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 20))
+                                .foregroundColor(greenColor)
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+                    
+                    // Show billing address if it exists
+                    if !client.billingAddress.isEmpty {
+                        billingAddressCard
+                    } else {
+                        Text("No billing address added")
+                            .font(.system(size: 16))
+                            .foregroundColor(mutedTextColor)
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 16)
+                    }
+                }
+                
+                Divider()
+            }
+            
+            // Contact details section
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    Text("Contact details")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(textColor)
+                    
+                    Spacer()
+                    
+                    Button(action: {
+                        // Navigate to edit contact details
+                        openEditContactDetails()
+                    }) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 20))
+                            .foregroundColor(greenColor)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+                
+                contactDetailsCard
+            }
         }
     }
     
     // Property card
     var propertyCard: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Property header
-            Text("Property")
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(textColor)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 16)
-            
-            // Property address card
-            Button(action: {
-                // Action when property is tapped
-            }) {
+        Button(action: {
+            // Action when property is tapped
+        }) {
+            VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    VStack(alignment: .leading, spacing: 8) {
-                        // Display formatted property address
-                        Text(client.formattedPropertyAddress)
-                            .font(.system(size: 20))
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(client.propertyAddress)
+                            .font(.system(size: 18, weight: .semibold))
                             .foregroundColor(textColor)
                             .multilineTextAlignment(.leading)
                     }
@@ -209,80 +284,188 @@ struct ClientDetailView: View {
                     Spacer()
                     
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 20))
-                        .foregroundColor(greenColor)
+                        .font(.system(size: 16))
+                        .foregroundColor(mutedTextColor)
                 }
-                .padding(.vertical, 16)
-                .padding(.horizontal, 16)
-                .background(Color.white)
-                .cornerRadius(8)
-            }
-            .padding(.horizontal, 16)
-            
-            // Billing address section
-            VStack(alignment: .leading, spacing: 0) {
-                Text("Billing address")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(textColor)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 24)
-                    .padding(.bottom, 16)
                 
                 Button(action: {
-                    // Action when billing address is tapped
+                    openMapsWithAddress(client.propertyAddress)
                 }) {
                     HStack {
-                        VStack(alignment: .leading, spacing: 8) {
-                            // Display formatted billing address
-                            Text(client.formattedBillingAddress)
-                                .font(.system(size: 20))
+                        Image(systemName: "map.fill")
+                            .font(.system(size: 14))
+                        Text("Get Directions")
+                            .font(.system(size: 14, weight: .medium))
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 12)
+                    .background(primaryColor)
+                    .foregroundColor(.white)
+                    .cornerRadius(6)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.vertical, 16)
+            .padding(.horizontal, 16)
+            .background(Color.white)
+            .cornerRadius(8)
+            .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+        }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 16)
+    }
+    
+    // Billing address card
+    var billingAddressCard: some View {
+        Button(action: {
+            // Action when billing address is tapped
+        }) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(client.billingAddress)
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(textColor)
+                            .multilineTextAlignment(.leading)
+                    }
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 16))
+                        .foregroundColor(mutedTextColor)
+                }
+                
+                Button(action: {
+                    openMapsWithAddress(client.billingAddress)
+                }) {
+                    HStack {
+                        Image(systemName: "map.fill")
+                            .font(.system(size: 14))
+                        Text("Get Directions")
+                            .font(.system(size: 14, weight: .medium))
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 12)
+                    .background(primaryColor)
+                    .foregroundColor(.white)
+                    .cornerRadius(6)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.vertical, 16)
+            .padding(.horizontal, 16)
+            .background(Color.white)
+            .cornerRadius(8)
+            .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+        }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 16)
+    }
+    
+    // Contact details card
+    var contactDetailsCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Show phone number if available
+            if !client.phoneNumber.isEmpty {
+                Button(action: {
+                    // Action when phone is tapped
+                }) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(client.phoneNumber)
+                                .font(.system(size: 18, weight: .semibold))
                                 .foregroundColor(textColor)
-                                .multilineTextAlignment(.leading)
+                            
+                            Text(client.phoneLabel)
+                                .font(.system(size: 14))
+                                .foregroundColor(mutedTextColor)
                         }
                         
                         Spacer()
                         
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 20))
+                        Image(systemName: "phone.fill")
+                            .font(.system(size: 16))
                             .foregroundColor(greenColor)
                     }
                     .padding(.vertical, 16)
                     .padding(.horizontal, 16)
                     .background(Color.white)
                     .cornerRadius(8)
+                    .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
                 }
                 .padding(.horizontal, 16)
             }
             
-            // Contact details section
-            VStack(alignment: .leading, spacing: 0) {
-                Text("Contact details")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(textColor)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 24)
-                    .padding(.bottom, 16)
-                
+            // Show email if available
+            if !client.email.isEmpty {
                 Button(action: {
-                    // Action when contact details are tapped
+                    // Action when email is tapped
                 }) {
                     HStack {
-                        Image(systemName: "plus")
-                            .font(.system(size: 20))
-                            .foregroundColor(greenColor)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(client.email)
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(textColor)
+                            
+                            Text("Email")
+                                .font(.system(size: 14))
+                                .foregroundColor(mutedTextColor)
+                        }
                         
                         Spacer()
+                        
+                        Image(systemName: "envelope.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(greenColor)
                     }
                     .padding(.vertical, 16)
                     .padding(.horizontal, 16)
                     .background(Color.white)
                     .cornerRadius(8)
+                    .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
                 }
                 .padding(.horizontal, 16)
-                .padding(.bottom, 24)
+            }
+            
+            // If no contact details available
+            if client.phoneNumber.isEmpty && client.email.isEmpty {
+                Text("No contact details added")
+                    .font(.system(size: 16))
+                    .foregroundColor(mutedTextColor)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 16)
             }
         }
-        .background(backgroundColor)
+        .padding(.bottom, 16)
+    }
+    
+    // Function to open Maps app with the address
+    func openMapsWithAddress(_ address: String) {
+        let geocoder = CLGeocoder()
+        geocoder.geocodeAddressString(address) { placemarks, error in
+            if let error = error {
+                print("Geocoding error: \(error.localizedDescription)")
+                return
+            }
+            
+            if let placemark = placemarks?.first {
+                let mapItem = MKMapItem(placemark: MKPlacemark(placemark: placemark))
+                mapItem.name = "Client Property"
+                mapItem.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
+            } else {
+                // If geocoding fails, try to open Maps with the address as a search query
+                if let encodedAddress = address.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+                   let url = URL(string: "http://maps.apple.com/?q=\(encodedAddress)") {
+                    UIApplication.shared.open(url)
+                }
+            }
+        }
+    }
+    
+    // Function to open edit contact details
+    func openEditContactDetails() {
+        isEditContactDetailsPresented = true
     }
     
     // Work tab content (placeholder)
@@ -311,16 +494,10 @@ struct ClientDetailView: View {
 #Preview {
     // Create a sample client for preview
     let client = Client(
-        firstName: "John",
-        lastName: "Smith",
-        companyName: "Smith Landscaping",
-        phoneNumber: "555-123-4567",
-        email: "john@example.com",
-        leadSource: "Website",
-        propertyAddress: "103 Fairway Drive",
-        propertyCity: "Acworth",
-        propertyState: "Georgia",
-        propertyZipCode: "30101"
+        firstName: "Joao",
+        lastName: "Leite",
+        propertyAddress: "103 Fairway Drive\nAcworth, Georgia 30101"
     )
+    
     return ClientDetailView(client: client)
 } 

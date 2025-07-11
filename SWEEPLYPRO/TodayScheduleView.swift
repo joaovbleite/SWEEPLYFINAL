@@ -14,11 +14,11 @@ struct TodayScheduleView: View {
     @State private var showNewJobForm = false // Add state for new job form
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 10) {
             // Section header with "View all" link
             HStack {
                 Text("Today's Schedule")
-                    .font(.system(size: 20, weight: .bold))
+                    .font(.system(size: 18, weight: .bold))
                     .foregroundColor(Color(hex: "#0A0A0A"))
                 
                 Spacer()
@@ -40,22 +40,22 @@ struct TodayScheduleView: View {
             
             // Horizontal scrolling carousel
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
+                HStack(spacing: 10) {
                     // Empty state card
                     if !hasScheduledVisits {
                         VStack(alignment: .center) {
                             Spacer()
                             Text("No visits scheduled today")
-                                .font(.system(size: 16, weight: .medium))
+                                .font(.system(size: 15, weight: .medium))
                                 .foregroundColor(Color(hex: "#5D6A76"))
                                 .multilineTextAlignment(.center)
                             Spacer()
                         }
-                        .frame(width: 300, height: 100)
+                        .frame(width: 280, height: 80)
                         .background(Color(hex: "#F8F8F6"))
-                        .cornerRadius(16)
+                        .cornerRadius(12)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 16)
+                            RoundedRectangle(cornerRadius: 12)
                                 .stroke(Color(hex: "#E0E0E0"), lineWidth: 1)
                         )
                     } else {
@@ -64,35 +64,35 @@ struct TodayScheduleView: View {
                         Text("Scheduled visits would appear here")
                             .font(.system(size: 14))
                             .foregroundColor(Color(hex: "#5D6A76"))
-                            .frame(width: 300, height: 100)
+                            .frame(width: 280, height: 80)
                             .background(Color.white)
-                            .cornerRadius(16)
+                            .cornerRadius(12)
                     }
                     
                     // Schedule a New Job card
                     Button(action: {
                         showNewJobForm = true
                     }) {
-                        HStack(spacing: 12) {
+                        HStack(spacing: 10) {
                             Image(systemName: "plus")
-                                .font(.system(size: 20, weight: .medium))
+                                .font(.system(size: 18, weight: .medium))
                                 .foregroundColor(Color(hex: "#4CAF50"))
                             
                             Text("Schedule a New Job")
-                                .font(.system(size: 18, weight: .semibold))
+                                .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(Color(hex: "#4CAF50"))
                         }
-                        .frame(width: 300, height: 100)
+                        .frame(width: 280, height: 80)
                         .background(Color.white)
-                        .cornerRadius(16)
+                        .cornerRadius(12)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 16)
+                            RoundedRectangle(cornerRadius: 12)
                                 .stroke(Color(hex: "#4CAF50"), lineWidth: 1.5)
                         )
                     }
                 }
                 .padding(.horizontal, 8)
-                .padding(.bottom, 4)
+                .padding(.bottom, 2)
             }
             .padding(.vertical, 2)
         }

@@ -23,10 +23,25 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		E9FBF13A2E1B2C3D0031C94B /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		E936C8032E15CBD90061DBFE /* SWEEPLYPRO.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SWEEPLYPRO.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E936C8142E15CBDB0061DBFE /* SWEEPLYPROTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SWEEPLYPROTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E936C81E2E15CBDB0061DBFE /* SWEEPLYPROUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SWEEPLYPROUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E9FBF1212E1B2C3B0031C94B /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		E9FBF1232E1B2C3B0031C94B /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -91,6 +106,7 @@
 				E936C8052E15CBD90061DBFE /* SWEEPLYPRO */,
 				E936C8172E15CBDB0061DBFE /* SWEEPLYPROTests */,
 				E936C8212E15CBDB0061DBFE /* SWEEPLYPROUITests */,
+				E9FBF1202E1B2C3B0031C94B /* Frameworks */,
 				E936C8042E15CBD90061DBFE /* Products */,
 			);
 			sourceTree = "<group>";
@@ -105,6 +121,15 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		E9FBF1202E1B2C3B0031C94B /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				E9FBF1212E1B2C3B0031C94B /* WidgetKit.framework */,
+				E9FBF1232E1B2C3B0031C94B /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -115,6 +140,7 @@
 				E936C7FF2E15CBD90061DBFE /* Sources */,
 				E936C8002E15CBD90061DBFE /* Frameworks */,
 				E936C8012E15CBD90061DBFE /* Resources */,
+				E9FBF13A2E1B2C3D0031C94B /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
@@ -285,7 +311,6 @@
 		E936C8282E15CBDB0061DBFE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SWEEPLYPRO/SWEEPLYPRO.entitlements;
 				CODE_SIGN_STYLE = Automatic;
@@ -315,7 +340,6 @@
 		E936C8292E15CBDB0061DBFE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = SWEEPLYPRO/SWEEPLYPRO.entitlements;
 				CODE_SIGN_STYLE = Automatic;

@@ -1,9 +1,11 @@
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct MoreView: View {
     @State private var selectedTab = 0
     @State private var searchText = ""
+    @State private var showSettings = false
     
     // Tab data with all 5 tabs
     let tabs = [
@@ -26,6 +28,7 @@ struct MoreView: View {
                 
                 Button(action: {
                     // Settings action
+                    showSettings = true
                 }) {
                     Image(systemName: "gearshape")
                         .font(.system(size: 22))
@@ -34,7 +37,7 @@ struct MoreView: View {
             }
             .padding(.top, 16)
             .padding(.bottom, 16)
-            .padding(.horizontal, 16)
+             .padding(.horizontal, 16)
             
             // Search Bar
             HStack {
@@ -63,6 +66,8 @@ struct MoreView: View {
                     ForEach(0..<tabs.count, id: \.self) { index in
                         Button(action: {
                             selectedTab = index
+                            // Add haptic feedback when changing tabs
+                            HapticManager.shared.selectionChanged()
                         }) {
                             HStack(spacing: 8) {
                                 Image(systemName: tabs[index].icon)
@@ -75,8 +80,12 @@ struct MoreView: View {
                             }
                             .padding(.horizontal, 20)
                             .padding(.vertical, 8)
-                            .background(Color(hex: "#F4F3EF"))
+                            .background(Color(hex: selectedTab == index ? "#E1E6F9" : "#EAEDF0"))
                             .cornerRadius(999)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 999)
+                                    .stroke(Color(hex: "#D1D5DB"), lineWidth: 0.5)
+                            )
                             .scaleEffect(selectedTab == index ? 1.05 : 1.0)
                             .animation(.easeInOut(duration: 0.2), value: selectedTab)
                         }
@@ -99,6 +108,9 @@ struct MoreView: View {
                 .background(Color(hex: "#F5F5F5"))
         }
         .padding(.horizontal, 8)
+        .fullScreenCover(isPresented: $showSettings) {
+            SettingsView()
+        }
     }
 }
 
@@ -111,7 +123,9 @@ struct TabContentView: View {
     @State private var showNewTaskView = false
     
     @Query private var clients: [Client]
-    @Query private var tasks: [Task]
+    @Query(filter: #Predicate<Task> { task in
+        task.status != "Completed"
+    }) private var tasks: [Task]
     
     var body: some View {
         VStack {
@@ -186,6 +200,7 @@ struct TabContentView: View {
                         
                         Button(action: {
                             showNewTaskView = true
+                            HapticManager.shared.impact(style: .medium)
                         }) {
                             HStack {
                                 Image(systemName: "plus")

@@ -27,8 +27,9 @@ final class Task {
     var dueDate: Date?
     var assignee: String
     var createdAt: Date
+    var isAllDayTask: Bool
     
-    init(title: String, taskDescription: String, status: String, priority: String, dueDate: Date?, assignee: String) {
+    init(title: String, taskDescription: String, status: String, priority: String, dueDate: Date?, assignee: String, isAllDayTask: Bool = true) {
         self.title = title
         self.taskDescription = taskDescription
         self.status = status
@@ -36,5 +37,6 @@ final class Task {
         self.dueDate = dueDate
         self.assignee = assignee
         self.createdAt = Date()
+        self.isAllDayTask = isAllDayTask
     }
 }

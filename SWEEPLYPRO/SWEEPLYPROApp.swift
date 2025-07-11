@@ -19,24 +19,8 @@ final class Client {
     var receivesTextMessages: Bool
     var email: String
     var leadSource: String
-    
-    // Property address fields
     var propertyAddress: String
-    var propertyAddressLine2: String
-    var propertyCity: String
-    var propertyState: String
-    var propertyZipCode: String
-    var propertyCountry: String
-    
-    // Billing address fields
-    var billingAddressSameAsProperty: Bool
     var billingAddress: String
-    var billingAddressLine2: String
-    var billingCity: String
-    var billingState: String
-    var billingZipCode: String
-    var billingCountry: String
-    
     var createdAt: Date
     
     init(
@@ -49,18 +33,7 @@ final class Client {
         email: String = "",
         leadSource: String = "",
         propertyAddress: String = "",
-        propertyAddressLine2: String = "",
-        propertyCity: String = "",
-        propertyState: String = "",
-        propertyZipCode: String = "",
-        propertyCountry: String = "United States",
-        billingAddressSameAsProperty: Bool = true,
-        billingAddress: String = "",
-        billingAddressLine2: String = "",
-        billingCity: String = "",
-        billingState: String = "",
-        billingZipCode: String = "",
-        billingCountry: String = "United States"
+        billingAddress: String = ""
     ) {
         self.firstName = firstName
         self.lastName = lastName
@@ -70,22 +43,8 @@ final class Client {
         self.receivesTextMessages = receivesTextMessages
         self.email = email
         self.leadSource = leadSource
-        
         self.propertyAddress = propertyAddress
-        self.propertyAddressLine2 = propertyAddressLine2
-        self.propertyCity = propertyCity
-        self.propertyState = propertyState
-        self.propertyZipCode = propertyZipCode
-        self.propertyCountry = propertyCountry
-        
-        self.billingAddressSameAsProperty = billingAddressSameAsProperty
-        self.billingAddress = billingAddressSameAsProperty ? propertyAddress : billingAddress
-        self.billingAddressLine2 = billingAddressSameAsProperty ? propertyAddressLine2 : billingAddressLine2
-        self.billingCity = billingAddressSameAsProperty ? propertyCity : billingCity
-        self.billingState = billingAddressSameAsProperty ? propertyState : billingState
-        self.billingZipCode = billingAddressSameAsProperty ? propertyZipCode : billingZipCode
-        self.billingCountry = billingAddressSameAsProperty ? propertyCountry : billingCountry
-        
+        self.billingAddress = billingAddress
         self.createdAt = Date()
     }
     
@@ -94,46 +53,6 @@ final class Client {
             return companyName.isEmpty ? "Unnamed Client" : companyName
         }
         return "\(firstName) \(lastName)".trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-    
-    var formattedPropertyAddress: String {
-        var components = [propertyAddress]
-        
-        if !propertyAddressLine2.isEmpty {
-            components.append(propertyAddressLine2)
-        }
-        
-        let cityStateZip = [propertyCity, propertyState, propertyZipCode]
-            .filter { !$0.isEmpty }
-            .joined(separator: ", ")
-        
-        if !cityStateZip.isEmpty {
-            components.append(cityStateZip)
-        }
-        
-        return components.joined(separator: "\n")
-    }
-    
-    var formattedBillingAddress: String {
-        if billingAddressSameAsProperty {
-            return formattedPropertyAddress
-        }
-        
-        var components = [billingAddress]
-        
-        if !billingAddressLine2.isEmpty {
-            components.append(billingAddressLine2)
-        }
-        
-        let cityStateZip = [billingCity, billingState, billingZipCode]
-            .filter { !$0.isEmpty }
-            .joined(separator: ", ")
-        
-        if !cityStateZip.isEmpty {
-            components.append(cityStateZip)
-        }
-        
-        return components.joined(separator: "\n")
     }
 }
 
@@ -145,8 +64,10 @@ struct SWEEPLYPROApp: App {
             Client.self,
             Task.self,
         ])
+        
+        // Use persistent storage with default configuration
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
+        
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
