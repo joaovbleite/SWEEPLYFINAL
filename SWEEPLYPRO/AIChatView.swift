@@ -10,10 +10,32 @@ import UIKit
 
 // OpenAI API client
 class OpenAIService {
-    private let apiKey = "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"
+    // API key should be stored securely in a configuration file or environment variable
+    // For development purposes, enter your API key in the Settings screen of the app
+    private var apiKey: String {
+        // In a real app, this would be retrieved from secure storage
+        return UserDefaults.standard.string(forKey: "openai_api_key") ?? ""
+    }
     private let urlString = "https://api.openai.com/v1/chat/completions"
     
+    // Check if API key is set and valid
+    func isApiKeyValid() -> Bool {
+        let key = apiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !key.isEmpty && key.hasPrefix("sk-")
+    }
+    
+    // Set API key (to be called from settings)
+    static func setApiKey(_ key: String) {
+        UserDefaults.standard.set(key, forKey: "openai_api_key")
+    }
+    
     func sendMessage(messages: [ChatMessage], completion: @escaping (Result<String, Error>) -> Void) {
+        // Check if API key is valid
+        if !isApiKeyValid() {
+            completion(.failure(NSError(domain: "OpenAIService", code: 0, userInfo: [NSLocalizedDescriptionKey: "API key is missing or invalid. Please set a valid API key in the Settings."])))
+            return
+        }
+        
         // Convert our ChatMessage objects to the format OpenAI expects
         var openAIMessages = [
             ["role": "system", "content": "You are a helpful assistant for a cleaning business app called Sweeply. You help users with scheduling, client management, invoicing, and business growth tips. Keep responses concise and focused on cleaning business needs. When answering pricing questions, provide specific price ranges (e.g. $25-$35) and clearly state the pricing unit (per hour, per room, per job, etc.). List 3-4 key factors that affect pricing as short bullet points, not paragraphs. Include a brief note about local market adjustments."]
@@ -371,6 +393,13 @@ struct AIChatView: View {
             // Create a new conversation if needed
             if currentConversationId == nil {
                 startNewConversation()
+            }
+            
+            // Check if API key needs to be set
+            if UserDefaults.standard.string(forKey: "openai_api_key") == nil {
+                // Show an alert or navigate to settings to prompt the user to enter their API key
+                errorMessage = "Please set your OpenAI API key in the Settings"
+                showError = true
             }
             
             // Add welcome message when view appears
