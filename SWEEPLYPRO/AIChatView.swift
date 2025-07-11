@@ -10,9 +10,7 @@ import UIKit
 
 // OpenAI API client
 class OpenAIService {
-    // IMPORTANT: Never commit actual API keys to version control
-    // Use environment variables or secure storage in production
-    private let apiKey = "YOUR_OPENAI_API_KEY_HERE" // Replace with your API key when testing
+    private let apiKey = "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"
     private let urlString = "https://api.openai.com/v1/chat/completions"
     
     func sendMessage(messages: [ChatMessage], completion: @escaping (Result<String, Error>) -> Void) {

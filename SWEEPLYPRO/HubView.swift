@@ -173,29 +173,52 @@ struct HubView: View {
             
             Spacer()
             
-            // Period selector
-            Menu {
-                ForEach(periodOptions, id: \.self) { period in
-                    Button(period) {
-                        selectedPeriod = period
+            HStack(spacing: 16) {
+                // Notification bell
+                Button(action: {
+                    // Show notifications
+                }) {
+                    ZStack(alignment: .topTrailing) {
+                        Image(systemName: "bell.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(primaryColor)
+                        
+                        // Notification indicator
+                        Circle()
+                            .fill(Color(hex: "#F44336"))
+                            .frame(width: 8, height: 8)
+                            .offset(x: 2, y: -2)
                     }
                 }
-            } label: {
-                HStack(spacing: 4) {
-                    Text(selectedPeriod)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(primaryColor)
-                    
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(primaryColor)
+                
+                // Period selector
+                Menu {
+                    ForEach(periodOptions, id: \.self) { period in
+                        Button(period) {
+                            selectedPeriod = period
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 4) {
+                        Text(selectedPeriod)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(primaryColor)
+                        
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(primaryColor)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(primaryColor.opacity(0.1))
+                    .cornerRadius(8)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(primaryColor.opacity(0.1))
-                .cornerRadius(8)
             }
         }
+        .padding(16)
+        .background(cardBgColor)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
     }
     
     // MARK: - Financial Summary View
