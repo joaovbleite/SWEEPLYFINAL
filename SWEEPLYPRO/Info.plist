@@ -4,6 +4,10 @@
 <dict>
 	<key>NSContactsUsageDescription</key>
 	<string>Sweeply needs access to your contacts to allow you to add clients from your address book.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Sweeply needs your location to show your position on the map and help you navigate to appointments.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Sweeply needs your location to show your position on the map and help you navigate to appointments.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

@@ -2,10 +2,11 @@
 //  DashboardView.swift
 //  SWEEPLYPRO
 //
-//  Created on 7/2/25.
+//  Created on 7/6/25.
 //
 
 import SwiftUI
+import MapKit
 
 struct DashboardView: View {
     @State private var selectedTab = 0
@@ -19,9 +20,12 @@ struct DashboardView: View {
                     
                     // Content sections
                     VStack(spacing: 16) {
+                        // Map view section
+                        DashboardMapView()
+                            .padding(.top, 12)
+                        
                         // Today's Schedule section
                         TodayScheduleView()
-                            .padding(.top, 12)
                         
                         // Daily Overview section
                         DailyOverviewView()

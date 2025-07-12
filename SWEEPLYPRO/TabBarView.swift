@@ -136,7 +136,7 @@ struct TabBarView: View {
                         isSelected: selectedTab == 0
                     ) {
                         if selectedTab != 0 {
-                            HapticManager.shared.impact(style: .light)
+                            HapticManager.shared.impact(style: .medium)
                             selectedTab = 0
                         }
                     }
@@ -150,7 +150,7 @@ struct TabBarView: View {
                         isSelected: selectedTab == 1
                     ) {
                         if selectedTab != 1 {
-                            HapticManager.shared.impact(style: .light)
+                            HapticManager.shared.impact(style: .medium)
                             selectedTab = 1
                         }
                     }
@@ -166,7 +166,7 @@ struct TabBarView: View {
                         isSelected: selectedTab == 3
                     ) {
                         if selectedTab != 3 {
-                            HapticManager.shared.impact(style: .light)
+                            HapticManager.shared.impact(style: .medium)
                             selectedTab = 3
                         }
                     }
@@ -180,7 +180,7 @@ struct TabBarView: View {
                         isSelected: selectedTab == 4
                     ) {
                         if selectedTab != 4 {
-                            HapticManager.shared.impact(style: .light)
+                            HapticManager.shared.impact(style: .medium)
                             selectedTab = 4
                         }
                     }
