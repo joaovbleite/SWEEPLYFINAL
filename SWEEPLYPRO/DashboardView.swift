@@ -19,28 +19,37 @@ struct DashboardView: View {
                     DashboardHeaderView()
                     
                     // Content sections
-                    VStack(spacing: 16) {
-                        // Map view section
+                    VStack(spacing: 8) {
+                        // Map view section (no horizontal padding, no top padding)
                         DashboardMapView()
-                            .padding(.top, 12)
                         
-                        // Today's Schedule section
+                        // Today's Schedule section (restored)
                         TodayScheduleView()
+                            .padding(.horizontal, 8)
+                            .padding(.top, -30)
                         
                         // Daily Overview section
                         DailyOverviewView()
+                            .padding(.horizontal, 8)
+                            .padding(.top, 8)
                         
                         // To Do List section
                         ToDoListView()
+                            .padding(.horizontal, 8)
+                            .padding(.top, 8)
                         
                         // Business Health section
                         BusinessHealthView()
+                            .padding(.horizontal, 8)
+                            .padding(.top, 8)
                         
                         // Discover section
                         DiscoverView()
+                            .padding(.horizontal, 8)
+                            .padding(.top, 8)
                             .padding(.bottom, 120) // Reduced padding at the bottom
                     }
-                    .padding(.horizontal, 8)
+                    // Remove the overall horizontal padding
                 }
                 .background(Color(hex: "#F5F5F5"))
             }

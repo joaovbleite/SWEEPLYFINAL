@@ -883,9 +883,9 @@ struct AIChatView: View {
                                         .font(.system(size: 14, weight: .medium))
                                         .foregroundColor(secondaryTextColor)
                                     
-                                    Text("Deep Cleaning")
-                                        .font(.system(size: 15))
-                                        .foregroundColor(textColor)
+                                        Text("Deep Cleaning")
+                                            .font(.system(size: 15))
+                                            .foregroundColor(textColor)
                                 }
                             }
                             
@@ -919,9 +919,9 @@ struct AIChatView: View {
                                         .font(.system(size: 14, weight: .medium))
                                         .foregroundColor(secondaryTextColor)
                                     
-                                    Text("Credit Card")
-                                        .font(.system(size: 15))
-                                        .foregroundColor(textColor)
+                                        Text("Credit Card")
+                                            .font(.system(size: 15))
+                                            .foregroundColor(textColor)
                                 }
                             }
                         }
@@ -1321,7 +1321,7 @@ struct AIChatView: View {
                     if error.localizedDescription.contains("API key") {
                         addAIMessage("I'm having trouble with my API connection. The API key might be incorrect or expired. Please contact support for assistance.")
                     } else {
-                        addAIMessage("I'm having trouble connecting to my servers. Please try again later.")
+                    addAIMessage("I'm having trouble connecting to my servers. Please try again later.")
                     }
                 }
             }

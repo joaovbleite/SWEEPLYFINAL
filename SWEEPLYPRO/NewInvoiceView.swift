@@ -1431,6 +1431,10 @@ struct AddDiscountView: View {
                         isDiscountFieldFocused = true
                     }
                 }
+                .onSubmit {
+                    // Hide keyboard when user presses return/done
+                    isDiscountFieldFocused = false
+                }
             
             Spacer()
             
@@ -1454,16 +1458,7 @@ struct AddDiscountView: View {
             .padding(.bottom, 32)
         }
         .background(backgroundColor)
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                
-                Button("Done") {
-                    isDiscountFieldFocused = false
-                }
-                .foregroundColor(primaryColor)
-            }
-        }
+        // Removed the toolbar with the duplicate "Done" button
     }
 }
 

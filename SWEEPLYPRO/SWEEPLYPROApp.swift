@@ -7,6 +7,23 @@
 
 import SwiftUI
 import SwiftData
+import UserNotifications
+
+// MARK: - Notification Delegate
+class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate, ObservableObject {
+    // This method is called when a notification is received while the app is in the foreground
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        // Show the notification even when the app is in the foreground
+        completionHandler([.banner, .sound, .badge])
+    }
+    
+    // This method is called when the user taps on a notification
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
+        // Handle the notification tap
+        print("Notification tapped: \(response.notification.request.content.title)")
+        completionHandler()
+    }
+}
 
 // Define Client model for SwiftData
 @Model
@@ -22,6 +39,8 @@ final class Client {
     var propertyAddress: String
     var billingAddress: String
     var createdAt: Date
+    
+    @Relationship(deleteRule: .cascade) var jobs: [Job]? = []
     
     init(
         firstName: String,
@@ -58,11 +77,19 @@ final class Client {
 
 @main
 struct SWEEPLYPROApp: App {
+    // Notification delegate
+    @StateObject private var notificationDelegate = NotificationDelegate()
+    
+    // Authentication manager
+    @StateObject private var authManager = SupabaseAuthManager.shared
+    
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
             Client.self,
             Task.self,
+            Job.self,
+            JobLineItem.self,
         ])
         
         // Use persistent storage with default configuration
@@ -75,7 +102,23 @@ struct SWEEPLYPROApp: App {
         }
     }()
 
-    init() {
+    var body: some Scene {
+        WindowGroup {
+            // Show authentication or main app based on auth status
+            Group {
+                if authManager.isAuthenticated {
+                    ContentView()
+                        .environmentObject(authManager)
+                } else {
+                    AuthenticationView()
+                        .environmentObject(authManager)
+                }
+            }
+            .preferredColorScheme(.light)
+            .onAppear {
+                // Set up notification center delegate when the app appears
+                UNUserNotificationCenter.current().delegate = notificationDelegate
+                
         // Set the appearance for UINavigationBar
         let appearance = UINavigationBarAppearance()
         appearance.configureWithOpaqueBackground()
@@ -95,11 +138,6 @@ struct SWEEPLYPROApp: App {
             windowScene?.windows.first?.backgroundColor = UIColor(Color(hex: "#F5F5F5"))
         }
     }
-
-    var body: some Scene {
-        WindowGroup {
-            ContentView()
-                .preferredColorScheme(.light)
         }
         .modelContainer(sharedModelContainer)
     }

@@ -1,4 +1,5 @@
 import SwiftUI
+import UserNotifications
 
 struct NotificationsView: View {
     @Environment(\.presentationMode) var presentationMode
@@ -6,6 +7,8 @@ struct NotificationsView: View {
     @State private var searchText = ""
     @State private var showFilterOptions = false
     @State private var showSearch = false
+    @StateObject private var notificationManager = NotificationManager.shared
+    @State private var isTestingNotifications = false
     
     // Filter options
     enum NotificationFilter: String, CaseIterable, Identifiable {
@@ -184,6 +187,42 @@ struct NotificationsView: View {
                     .fill(Color(hex: "#EAEAEA"))
                     .frame(height: 1)
                 
+                // Test Notification Button
+                VStack(spacing: 12) {
+                    Button(action: {
+                        startTestNotifications()
+                    }) {
+                        HStack {
+                            Image(systemName: isTestingNotifications ? "bell.badge.fill" : "bell.badge")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white)
+                            
+                            Text(isTestingNotifications ? "Test Notifications Running..." : "Start Test Notifications")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white)
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                        .background(isTestingNotifications ? Color(hex: "#8D9BA8") : Color(hex: "#246BFD"))
+                        .cornerRadius(10)
+                    }
+                    .disabled(isTestingNotifications)
+                    
+                    if isTestingNotifications {
+                        Text("4 notifications will be sent every 30 seconds")
+                            .font(.system(size: 14))
+                            .foregroundColor(Color(hex: "#5F7376"))
+                            .multilineTextAlignment(.center)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                
+                // Another divider
+                Rectangle()
+                    .fill(Color(hex: "#EAEAEA"))
+                    .frame(height: 1)
+                
                 // Filter options sheet
                 if showFilterOptions {
                     VStack(alignment: .leading, spacing: 0) {
@@ -308,6 +347,45 @@ struct NotificationsView: View {
             return "You've read all your notifications"
         default:
             return "You don't have any \(selectedFilter.rawValue.lowercased()) notifications"
+        }
+    }
+    
+    // Test notification function
+    private func startTestNotifications() {
+        print("🔔 Starting test notifications...")
+        
+        // Check permission first
+        notificationManager.checkNotificationStatus { isAuthorized in
+            if isAuthorized {
+                // Start the test notifications
+                isTestingNotifications = true
+                notificationManager.startRepeatingTestNotifications()
+                
+                // Reset the button state after 2 minutes (4 notifications * 30 seconds + buffer)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 150) {
+                    isTestingNotifications = false
+                }
+            } else {
+                // Request permission first
+                notificationManager.requestPermission()
+                
+                // Check again after a short delay
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                    notificationManager.checkNotificationStatus { isNowAuthorized in
+                        if isNowAuthorized {
+                            isTestingNotifications = true
+                            notificationManager.startRepeatingTestNotifications()
+                            
+                            // Reset the button state after 2 minutes
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 150) {
+                                isTestingNotifications = false
+                            }
+                        } else {
+                            print("❌ Notification permission still denied")
+                        }
+                    }
+                }
+            }
         }
     }
 }

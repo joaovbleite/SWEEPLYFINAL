@@ -40,6 +40,7 @@ struct TabBarView: View {
     @State private var showNewClientView = false
     @State private var showNewInvoiceView = false
     @State private var showNewQuoteView = false
+    @State private var showNewJobView = false
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -112,6 +113,7 @@ struct TabBarView: View {
                     ) {
                         // Handle Job action
                         showActionMenu = false
+                        showNewJobView = true
                     }
                     
                     // Space for the FAB and tab bar
@@ -229,6 +231,9 @@ struct TabBarView: View {
         }
         .sheet(isPresented: $showNewQuoteView) {
             NewQuoteView()
+        }
+        .sheet(isPresented: $showNewJobView) {
+            NewJobView()
         }
         .safeAreaInset(edge: .bottom) {
             Color.clear.frame(height: 0)

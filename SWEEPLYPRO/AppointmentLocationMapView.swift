@@ -152,6 +152,10 @@ struct LocationMapViewRepresentable: UIViewRepresentable {
         mapView.isRotateEnabled = true
         mapView.isPitchEnabled = true
         
+        // Configure POI filtering to show only gas stations and EV chargers
+        let filterCategories: [MKPointOfInterestCategory] = [.gasStation, .evCharger]
+        mapView.pointOfInterestFilter = MKPointOfInterestFilter(including: filterCategories)
+        
         // Add annotation
         let annotation = MKPointAnnotation()
         annotation.coordinate = annotationCoordinate

@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		E9B581C72E23404700DD3FAC /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = E9B581C62E23404700DD3FAC /* Supabase */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		E936C8152E15CBDB0061DBFE /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -80,6 +84,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E9B581C72E23404700DD3FAC /* Supabase in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -151,6 +156,7 @@
 			);
 			name = SWEEPLYPRO;
 			packageProductDependencies = (
+				E9B581C62E23404700DD3FAC /* Supabase */,
 			);
 			productName = SWEEPLYPRO;
 			productReference = E936C8032E15CBD90061DBFE /* SWEEPLYPRO.app */;
@@ -234,6 +240,9 @@
 			);
 			mainGroup = E936C7FA2E15CBD90061DBFE;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				E9B581C52E23404700DD3FAC /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E936C8042E15CBD90061DBFE /* Products */;
 			projectDirPath = "";
@@ -319,6 +328,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SWEEPLYPRO/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Sweeply CRM & Growth ";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -348,6 +359,8 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = SWEEPLYPRO/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Sweeply CRM & Growth ";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -599,6 +612,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		E9B581C52E23404700DD3FAC /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E9B581C62E23404700DD3FAC /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E9B581C52E23404700DD3FAC /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = E936C7FB2E15CBD90061DBFE /* Project object */;
 }
