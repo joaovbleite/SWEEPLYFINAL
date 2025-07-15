@@ -10,7 +10,7 @@ import UIKit
 
 // OpenAI API client
 class OpenAIService {
-    private let apiKey = "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"
+    private let apiKey = "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"
     private let urlString = "https://api.openai.com/v1/chat/completions"
     
     func sendMessage(messages: [ChatMessage], completion: @escaping (Result<String, Error>) -> Void) {
@@ -27,7 +27,7 @@ class OpenAIService {
         
         // Prepare the request body
         let requestBody: [String: Any] = [
-            "model": "gpt-4o",
+            "model": "gpt-4o-mini", // Using a more widely available model
             "messages": openAIMessages,
             "temperature": 0.7,
             "max_tokens": 800
@@ -41,8 +41,10 @@ class OpenAIService {
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
+        // Ensure API key is properly formatted with Bearer prefix
         request.addValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 30
         
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
@@ -64,6 +66,27 @@ class OpenAIService {
             }
             
             do {
+                if let httpResponse = response as? HTTPURLResponse {
+                    print("API Response Status Code: \(httpResponse.statusCode)")
+                    
+                    // Log response data for debugging
+                    if let responseString = String(data: data, encoding: .utf8) {
+                        print("API Response: \(responseString)")
+                    }
+                    
+                    // Check for HTTP error codes
+                    if httpResponse.statusCode != 200 {
+                        if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                           let error = json["error"] as? [String: Any],
+                           let message = error["message"] as? String {
+                            completion(.failure(NSError(domain: "OpenAIService", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "API Error: \(message)"])))
+                        } else {
+                            completion(.failure(NSError(domain: "OpenAIService", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "API Error: HTTP \(httpResponse.statusCode)"])))
+                        }
+                        return
+                    }
+                }
+                
                 if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
                    let choices = json["choices"] as? [[String: Any]],
                    let firstChoice = choices.first,
@@ -75,13 +98,14 @@ class OpenAIService {
                     if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
                        let error = json["error"] as? [String: Any],
                        let message = error["message"] as? String {
-                        completion(.failure(NSError(domain: "OpenAIService", code: 0, userInfo: [NSLocalizedDescriptionKey: message])))
+                        completion(.failure(NSError(domain: "OpenAIService", code: 0, userInfo: [NSLocalizedDescriptionKey: "API Error: \(message)"])))
                     } else {
-                        completion(.failure(NSError(domain: "OpenAIService", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to parse response"])))
+                        completion(.failure(NSError(domain: "OpenAIService", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to parse response from OpenAI API"])))
                     }
                 }
             } catch {
-                completion(.failure(error))
+                print("JSON Parsing Error: \(error.localizedDescription)")
+                completion(.failure(NSError(domain: "OpenAIService", code: 0, userInfo: [NSLocalizedDescriptionKey: "Error parsing API response: \(error.localizedDescription)"])))
             }
         }.resume()
     }
@@ -820,16 +844,8 @@ struct AIChatView: View {
                             
                             Spacer()
                             
-                            // Total amount
-                            VStack(alignment: .trailing, spacing: 4) {
-                                Text("Total")
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(secondaryTextColor)
-                                
-                                Text("$125.00")
-                                    .font(.system(size: 18, weight: .bold))
-                                    .foregroundColor(Color(hex: "#4CAF50"))  // Green color for price
-                            }
+                            // Empty space instead of total amount
+                            Spacer()
                         }
                         .padding(.vertical, 8)
                         
@@ -867,17 +883,9 @@ struct AIChatView: View {
                                         .font(.system(size: 14, weight: .medium))
                                         .foregroundColor(secondaryTextColor)
                                     
-                                    HStack {
                                         Text("Deep Cleaning")
                                             .font(.system(size: 15))
                                             .foregroundColor(textColor)
-                                        
-                                        Spacer()
-                                        
-                                        Text("$125.00")
-                                            .font(.system(size: 16, weight: .semibold))
-                                            .foregroundColor(Color(hex: "#4CAF50"))  // Green color for price
-                                    }
                                 }
                             }
                             
@@ -911,17 +919,9 @@ struct AIChatView: View {
                                         .font(.system(size: 14, weight: .medium))
                                         .foregroundColor(secondaryTextColor)
                                     
-                                    HStack {
                                         Text("Credit Card")
                                             .font(.system(size: 15))
                                             .foregroundColor(textColor)
-                                        
-                                        Spacer()
-                                        
-                                        Text("$125.00")
-                                            .font(.system(size: 16, weight: .semibold))
-                                            .foregroundColor(Color(hex: "#4CAF50"))  // Green color for price
-                                    }
                                 }
                             }
                         }
@@ -1312,10 +1312,17 @@ struct AIChatView: View {
                         addAIMessage(response, isVerifiedAI: true)
                     }
                 case .failure(let error):
-                    errorMessage = error.localizedDescription
+                    // Display detailed error for debugging
+                    errorMessage = "Error: \(error.localizedDescription)"
                     showError = true
-                    // Add a fallback message
+                    print("OpenAI API Error: \(error.localizedDescription)")
+                    
+                    // Add a user-friendly message
+                    if error.localizedDescription.contains("API key") {
+                        addAIMessage("I'm having trouble with my API connection. The API key might be incorrect or expired. Please contact support for assistance.")
+                    } else {
                     addAIMessage("I'm having trouble connecting to my servers. Please try again later.")
+                    }
                 }
             }
         }

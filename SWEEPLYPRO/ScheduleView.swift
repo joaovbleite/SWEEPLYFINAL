@@ -9,7 +9,7 @@ import SwiftUI
 import SwiftData
 
 // MARK: - Appointment Model
-struct Appointment: Identifiable {
+struct Appointment: Identifiable, Equatable {
     let id = UUID()
     let title: String
     let clientName: String
@@ -18,6 +18,10 @@ struct Appointment: Identifiable {
     let endTime: String
     let date: Int
     let color: String
+    
+    static func == (lhs: Appointment, rhs: Appointment) -> Bool {
+        lhs.id == rhs.id
+    }
 }
 
 // MARK: - WorkTask Model (renamed from Task to avoid conflicts)
@@ -45,6 +49,16 @@ struct WorkTask: Identifiable {
     }
 }
 
+// MARK: - Week Data Model
+struct WeekData: Identifiable {
+    let id = UUID()
+    let startDate: Date
+    let dates: [Date]
+    let days: [Int]
+    let month: String
+    let year: Int
+}
+
 struct ScheduleView: View {
     // SwiftData query for tasks
     @Query(filter: #Predicate<Task> { task in
@@ -55,7 +69,7 @@ struct ScheduleView: View {
     // State variables
     @State private var selectedMonth = "July"
     @State private var selectedDate = Date()
-    @State private var selectedViewMode: ViewMode = .day
+    @State private var selectedViewMode: ViewMode = .day // Ensure default is set to day
     @State private var selectedDayIndex = 0
     @State private var showMonthPicker = false
     @State private var showAppointmentDetails = false
@@ -73,6 +87,8 @@ struct ScheduleView: View {
     @State private var currentWeekDays: [Int] = []
     @State private var currentWeekMonth = "July"
     @State private var currentWeekYear = 2025
+    @State private var weeksData: [WeekData] = [] // New state for carousel
+    @State private var currentWeekIndex: Int = 0 // New state for carousel
     
     // View options state
     @State private var showUnscheduledAppointments = false
@@ -207,85 +223,132 @@ struct ScheduleView: View {
     // Function to initialize the week dates
     private func initializeWeekDates() {
         let calendar = Calendar.current
+        let today = Date()
+        
+        // Clear existing weeks data to avoid duplication
+        weeksData.removeAll()
         
         // Get the current week's Sunday (or first day of week based on locale)
-        let components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: Date())
-        currentWeekStartDate = calendar.date(from: components) ?? Date()
+        let components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: today)
+        currentWeekStartDate = calendar.date(from: components) ?? today
         
-        // Generate dates for the full week
-        currentWeekDates = (0..<7).map { day in
-            calendar.date(byAdding: .day, value: day, to: currentWeekStartDate) ?? Date()
+        // Add two previous weeks for better scrolling
+        if let prevWeekStartDate2 = calendar.date(byAdding: .day, value: -14, to: currentWeekStartDate) {
+            addWeekToCarousel(startDate: prevWeekStartDate2)
         }
         
-        // Extract day numbers
-        currentWeekDays = currentWeekDates.map { calendar.component(.day, from: $0) }
+        // Add previous week
+        if let prevWeekStartDate = calendar.date(byAdding: .day, value: -7, to: currentWeekStartDate) {
+            addWeekToCarousel(startDate: prevWeekStartDate)
+        }
         
-        // Get month name and year for display
-        let firstDate = currentWeekDates.first ?? Date()
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "MMMM"
-        currentWeekMonth = dateFormatter.string(from: firstDate)
-        currentWeekYear = calendar.component(.year, from: firstDate)
+        // Add current week
+        addWeekToCarousel(startDate: currentWeekStartDate)
         
+        // Add next week
+        if let nextWeekStartDate = calendar.date(byAdding: .day, value: 7, to: currentWeekStartDate) {
+            addWeekToCarousel(startDate: nextWeekStartDate)
+        }
+        
+        // Add second next week for better scrolling
+        if let nextWeekStartDate2 = calendar.date(byAdding: .day, value: 14, to: currentWeekStartDate) {
+            addWeekToCarousel(startDate: nextWeekStartDate2)
+        }
+        
+        // Set current week as the middle index (2)
+        currentWeekIndex = 2
+        
+        // Set the current week data as active
+        setActiveWeek(index: currentWeekIndex)
+        
+        // Find today's index in the week and select it
+        let todayWeekday = calendar.component(.weekday, from: today) - 1 // 0-based index (0 = Sunday)
+        selectedDayIndex = todayWeekday
+        
+        // Make sure selectedDate is set to today
+        selectedDate = today
+        
+        print("Initialized weeks data with \(weeksData.count) weeks")
+        print("Current week index: \(currentWeekIndex)")
+        print("Today's weekday: \(todayWeekday), selected day index: \(selectedDayIndex)")
+    }
+    
+    // Function to add a week to the carousel
+    private func addWeekToCarousel(startDate: Date, addToBeginning: Bool = false) {
+        let calendar = Calendar.current
+            
+        // Generate dates for the week
+        let weekDates = (0..<7).map { day in
+            calendar.date(byAdding: .day, value: day, to: startDate) ?? Date()
+            }
+            
+            // Extract day numbers
+        let weekDays = weekDates.map { calendar.component(.day, from: $0) }
+            
+            // Get month name and year for display
+        let firstDate = weekDates.first ?? Date()
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "MMMM"
+        let weekMonth = dateFormatter.string(from: firstDate)
+        let weekYear = calendar.component(.year, from: firstDate)
+            
+        // Create week data
+        let weekData = WeekData(
+            startDate: startDate,
+            dates: weekDates,
+            days: weekDays,
+            month: weekMonth,
+            year: weekYear
+        )
+        
+        // Add to weeks array
+        if addToBeginning {
+            weeksData.insert(weekData, at: 0)
+            // Update currentWeekIndex if we're adding to the beginning
+            if currentWeekIndex >= 0 {
+                currentWeekIndex += 1
+            }
+        } else {
+            weeksData.append(weekData)
+        }
+        
+        print("Added week: \(weekMonth) \(weekDays.first ?? 0)-\(weekDays.last ?? 0), total weeks: \(weeksData.count)")
+            }
+            
+    // Function to set the active week
+    private func setActiveWeek(index: Int) {
+        guard index >= 0 && index < weeksData.count else { return }
+        
+        let weekData = weeksData[index]
+        currentWeekDates = weekData.dates
+        currentWeekDays = weekData.days
+        currentWeekMonth = weekData.month
+        currentWeekYear = weekData.year
+        currentWeekStartDate = weekData.startDate
+            
         // Update selected month
-        selectedMonth = currentWeekMonth
+            selectedMonth = currentWeekMonth
     }
     
     // Function to navigate to the previous week
     private func goToPreviousWeek() {
-        let calendar = Calendar.current
-        if let newStartDate = calendar.date(byAdding: .day, value: -7, to: currentWeekStartDate) {
-            currentWeekStartDate = newStartDate
-            
-            // Generate dates for the new week
-            currentWeekDates = (0..<7).map { day in
-                calendar.date(byAdding: .day, value: day, to: currentWeekStartDate) ?? Date()
+        print("Going to previous week, current index: \(currentWeekIndex), total weeks: \(weeksData.count)")
+        
+        withAnimation {
+            if currentWeekIndex > 0 {
+                currentWeekIndex -= 1
             }
-            
-            // Extract day numbers
-            currentWeekDays = currentWeekDates.map { calendar.component(.day, from: $0) }
-            
-            // Get month name and year for display
-            let firstDate = currentWeekDates.first ?? Date()
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "MMMM"
-            currentWeekMonth = dateFormatter.string(from: firstDate)
-            currentWeekYear = calendar.component(.year, from: firstDate)
-            
-            // Update selected month if it changed
-            selectedMonth = currentWeekMonth
-            
-            // Reset selected day index to first day
-            selectedDayIndex = 0
         }
     }
     
     // Function to navigate to the next week
     private func goToNextWeek() {
-        let calendar = Calendar.current
-        if let newStartDate = calendar.date(byAdding: .day, value: 7, to: currentWeekStartDate) {
-            currentWeekStartDate = newStartDate
-            
-            // Generate dates for the new week
-            currentWeekDates = (0..<7).map { day in
-                calendar.date(byAdding: .day, value: day, to: currentWeekStartDate) ?? Date()
+        print("Going to next week, current index: \(currentWeekIndex), total weeks: \(weeksData.count)")
+        
+        withAnimation {
+            if currentWeekIndex < weeksData.count - 1 {
+                currentWeekIndex += 1
             }
-            
-            // Extract day numbers
-            currentWeekDays = currentWeekDates.map { calendar.component(.day, from: $0) }
-            
-            // Get month name and year for display
-            let firstDate = currentWeekDates.first ?? Date()
-            let dateFormatter = DateFormatter()
-            dateFormatter.dateFormat = "MMMM"
-            currentWeekMonth = dateFormatter.string(from: firstDate)
-            currentWeekYear = calendar.component(.year, from: firstDate)
-            
-            // Update selected month if it changed
-            selectedMonth = currentWeekMonth
-            
-            // Reset selected day index to first day
-            selectedDayIndex = 0
         }
     }
     
@@ -294,24 +357,41 @@ struct ScheduleView: View {
             // Top bar with month selector and icons
             topBar
             
+            // View mode selector (redesigned) - MOVED ABOVE week selector
+            viewModeSelector
+            
             // Week day selector (redesigned)
             weekDaySelector
             
-            // View mode selector (redesigned)
-            viewModeSelector
-            
             // Main content based on selected view mode
-            switch selectedViewMode {
-            case .day:
-                dayViewContent
-            case .list:
-                listViewContent
-            case .map:
-                mapViewContent
+            ZStack {
+                switch selectedViewMode {
+                case .day:
+                    dayViewContent
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .trailing).combined(with: .opacity),
+                            removal: .move(edge: .leading).combined(with: .opacity)
+                        ))
+                case .list:
+                    listViewContent
+                        .transition(.asymmetric(
+                            insertion: .move(edge: selectedViewMode == .list ? .trailing : .leading).combined(with: .opacity),
+                            removal: .move(edge: selectedViewMode == .list ? .leading : .trailing).combined(with: .opacity)
+                        ))
+                case .map:
+                    mapViewContent
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .leading).combined(with: .opacity),
+                            removal: .move(edge: .trailing).combined(with: .opacity)
+                        ))
+                }
             }
+            .animation(.easeInOut(duration: 0.3), value: selectedViewMode)
         }
-        .background(Color(hex: "#F5F5F5"))
         .onAppear {
+            // Initialize week dates
+            initializeWeekDates()
+            
             // Start timer to update current time indicator
             self.currentTime = Date()
             self.timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { _ in
@@ -322,6 +402,25 @@ struct ScheduleView: View {
             // Invalidate timer when view disappears
             self.timer?.invalidate()
             self.timer = nil
+        }
+        .onChange(of: showWeekends) { newValue in
+            // If weekends are turned off and current selection is a weekend, select the nearest weekday
+            if !newValue && !currentWeekDates.isEmpty && selectedDayIndex < currentWeekDates.count {
+                let currentDate = currentWeekDates[selectedDayIndex]
+                let weekday = Calendar.current.component(.weekday, from: currentDate)
+                
+                // If current selection is a weekend (Sunday = 1, Saturday = 7)
+                if weekday == 1 || weekday == 7 {
+                    // Find the nearest weekday
+                    let nearestWeekdayIndex = findNearestWeekdayIndex()
+                    if nearestWeekdayIndex != -1 {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            selectedDayIndex = nearestWeekdayIndex
+                            selectedDate = currentWeekDates[nearestWeekdayIndex]
+                        }
+                    }
+                }
+            }
         }
         .sheet(isPresented: $showMonthPicker) {
             monthPickerView
@@ -353,7 +452,7 @@ struct ScheduleView: View {
             }) {
                 HStack(spacing: 4) {
                     Text(selectedMonth)
-                        .font(.system(size: 28, weight: .bold))
+                        .font(.system(size: 24, weight: .bold))
                         .foregroundColor(Color(hex: "#052017"))
                     
                     Image(systemName: "chevron.down")
@@ -370,17 +469,17 @@ struct ScheduleView: View {
                 // Action for calendar button
             }) {
                 Image(systemName: "calendar")
-                    .font(.system(size: 20, weight: .medium))
+                    .font(.system(size: 22))
                     .foregroundColor(Color(hex: "#052017"))
             }
             .padding(.horizontal, 12)
             
-            // Settings icon
+            // Settings icon - Changed to open view options instead of settings
             Button(action: {
-                showSettings = true
+                showViewOptions = true
             }) {
                 Image(systemName: "gearshape")
-                    .font(.system(size: 20, weight: .medium))
+                    .font(.system(size: 22))
                     .foregroundColor(Color(hex: "#052017"))
             }
             .padding(.trailing, 16)
@@ -389,30 +488,101 @@ struct ScheduleView: View {
         .background(Color.white)
     }
     
-    // MARK: - Month Picker View
+    // MARK: - Month Calendar Picker
     private var monthPickerView: some View {
         NavigationView {
-            List {
-                ForEach(months, id: \.self) { month in
+            VStack(spacing: 0) {
+                // Calendar header
+                HStack {
                     Button(action: {
-                        selectedMonth = month
-                        showMonthPicker = false
+                        goToPreviousMonth()
                     }) {
-                        HStack {
-                            Text(month)
+                        Image(systemName: "chevron.left")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(Color(hex: "#246BFD"))
+                    }
+                    
+                    Spacer()
+                    
+                    Text("\(selectedMonth) \(currentWeekYear)")
+                        .font(.system(size: 18, weight: .semibold))
                                 .foregroundColor(Color(hex: "#052017"))
                             
                             Spacer()
                             
-                            if selectedMonth == month {
-                                Image(systemName: "checkmark")
+                    Button(action: {
+                        goToNextMonth()
+                    }) {
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(Color(hex: "#246BFD"))
                             }
                         }
-                    }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+                
+                // Day of week header
+                HStack(spacing: 0) {
+                    ForEach(["S", "M", "T", "W", "T", "F", "S"], id: \.self) { day in
+                        Text(day)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(Color(hex: "#5A7184"))
+                            .frame(maxWidth: .infinity)
                 }
             }
-            .navigationTitle("Select Month")
+                .padding(.vertical, 8)
+                .background(Color(hex: "#F8F8F6"))
+                
+                // Calendar grid
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 0), count: 7), spacing: 0) {
+                    ForEach(daysInSelectedMonth(), id: \.self) { day in
+                        calendarDayCell(day: day.day, isCurrentMonth: day.isCurrentMonth, hasAppointments: day.hasAppointments)
+                    }
+                }
+                .padding(.top, 8)
+                
+                // Appointment list for selected date
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("Appointments")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(Color(hex: "#052017"))
+                            .padding(.horizontal, 16)
+                            .padding(.top, 16)
+                        
+                        if let selectedDate = getSelectedDate(),
+                           let appointmentsForDay = getAppointmentsForDate(selectedDate) {
+                            if appointmentsForDay.isEmpty {
+                                Text("No appointments for this day")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(Color(hex: "#5A7184"))
+                                    .padding(.horizontal, 16)
+                            } else {
+                                ForEach(appointmentsForDay) { appointment in
+                                    calendarAppointmentRow(appointment: appointment)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.bottom, 16)
+                }
+                .background(Color(hex: "#F8F8F6"))
+                
+                // Done button to close the calendar
+                Button(action: {
+                    showMonthPicker = false
+                }) {
+                    Text("Done")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color(hex: "#246BFD"))
+                        .cornerRadius(12)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 16)
+            }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -425,147 +595,519 @@ struct ScheduleView: View {
         }
     }
     
+    // MARK: - Calendar Helper Functions
+    
+    // Structure to represent a day in the calendar
+    private struct CalendarDay: Hashable {
+        let day: Int
+        let isCurrentMonth: Bool
+        let hasAppointments: Bool
+        let date: Date
+    }
+    
+    // Function to get days in the selected month
+    private func daysInSelectedMonth() -> [CalendarDay] {
+        let calendar = Calendar.current
+        
+        // Create date components for the selected month
+        var dateComponents = DateComponents()
+        dateComponents.year = currentWeekYear
+        dateComponents.month = months.firstIndex(of: selectedMonth)! + 1
+        dateComponents.day = 1
+        
+        guard let firstDayOfMonth = calendar.date(from: dateComponents) else {
+            return []
+        }
+        
+        // Get the weekday of the first day (0 = Sunday, 1 = Monday, etc.)
+        let firstWeekday = calendar.component(.weekday, from: firstDayOfMonth) - 1
+        
+        // Get the number of days in the month
+        let daysInMonth = calendar.range(of: .day, in: .month, for: firstDayOfMonth)?.count ?? 0
+        
+        // Get the previous month for filling in the beginning
+        var previousDateComponents = dateComponents
+        previousDateComponents.month! -= 1
+        let previousMonth = calendar.date(from: previousDateComponents)!
+        let daysInPreviousMonth = calendar.range(of: .day, in: .month, for: previousMonth)?.count ?? 0
+        
+        var days: [CalendarDay] = []
+        
+        // Add days from previous month to fill the first week
+        for i in 0..<firstWeekday {
+            let day = daysInPreviousMonth - firstWeekday + i + 1
+            
+            // Create date for this day
+            var components = DateComponents()
+            components.year = previousDateComponents.month == 0 ? currentWeekYear - 1 : currentWeekYear
+            components.month = previousDateComponents.month == 0 ? 12 : previousDateComponents.month
+            components.day = day
+            let date = calendar.date(from: components) ?? Date()
+            
+            days.append(CalendarDay(day: day, isCurrentMonth: false, hasAppointments: false, date: date))
+        }
+        
+        // Add days from current month
+        for day in 1...daysInMonth {
+            // Create date for this day
+            var components = DateComponents()
+            components.year = currentWeekYear
+            components.month = dateComponents.month
+            components.day = day
+            let date = calendar.date(from: components) ?? Date()
+            
+            // Check if there are appointments for this day
+            let hasAppointments = appointments.contains { appointment in
+                appointment.date == day
+            }
+            
+            days.append(CalendarDay(day: day, isCurrentMonth: true, hasAppointments: hasAppointments, date: date))
+        }
+        
+        // Fill in the remaining days from the next month
+        let remainingDays = 42 - days.count // 6 rows of 7 days
+        
+        for day in 1...remainingDays {
+            // Create date for this day
+            var components = DateComponents()
+            components.year = dateComponents.month == 12 ? currentWeekYear + 1 : currentWeekYear
+            components.month = dateComponents.month == 12 ? 1 : dateComponents.month! + 1
+            components.day = day
+            let date = calendar.date(from: components) ?? Date()
+            
+            days.append(CalendarDay(day: day, isCurrentMonth: false, hasAppointments: false, date: date))
+        }
+        
+        return days
+    }
+    
+    // Function to go to previous month
+    private func goToPreviousMonth() {
+        let calendar = Calendar.current
+        let currentMonthIndex = months.firstIndex(of: selectedMonth) ?? 0
+        
+        if currentMonthIndex == 0 {
+            // Go to December of previous year
+            selectedMonth = months[11]
+            currentWeekYear -= 1
+        } else {
+            // Go to previous month
+            selectedMonth = months[currentMonthIndex - 1]
+        }
+    }
+    
+    // Function to go to next month
+    private func goToNextMonth() {
+        let calendar = Calendar.current
+        let currentMonthIndex = months.firstIndex(of: selectedMonth) ?? 0
+        
+        if currentMonthIndex == 11 {
+            // Go to January of next year
+            selectedMonth = months[0]
+            currentWeekYear += 1
+        } else {
+            // Go to next month
+            selectedMonth = months[currentMonthIndex + 1]
+        }
+    }
+    
+    // Function to select a specific day
+    private func selectDay(_ day: Int) {
+        let calendar = Calendar.current
+        
+        // Create date components for the selected day
+        var dateComponents = DateComponents()
+        dateComponents.year = currentWeekYear
+        dateComponents.month = months.firstIndex(of: selectedMonth)! + 1
+        dateComponents.day = day
+        
+        if let selectedDate = calendar.date(from: dateComponents) {
+            // Find the week that contains this date
+            let weekOfYear = calendar.component(.weekOfYear, from: selectedDate)
+            let components = DateComponents(weekOfYear: weekOfYear, yearForWeekOfYear: currentWeekYear)
+            
+            if let weekStartDate = calendar.date(from: components) {
+                // Update the week view
+                currentWeekStartDate = weekStartDate
+                
+                // Generate dates for the week
+                currentWeekDates = (0..<7).map { day in
+                    calendar.date(byAdding: .day, value: day, to: currentWeekStartDate) ?? Date()
+                }
+                
+                // Extract day numbers
+                currentWeekDays = currentWeekDates.map { calendar.component(.day, from: $0) }
+                
+                // Find the index of the selected day in the week
+                for (index, date) in currentWeekDates.enumerated() {
+                    if calendar.component(.day, from: date) == day && 
+                       calendar.component(.month, from: date) == dateComponents.month! {
+                        selectedDayIndex = index
+                        break
+                    }
+                }
+                
+                // Update month name
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "MMMM"
+                currentWeekMonth = dateFormatter.string(from: selectedDate)
+                selectedMonth = currentWeekMonth
+                
+                // REMOVED: showMonthPicker = false
+                // This line was causing the calendar to close when a day was selected
+            }
+        }
+    }
+    
+    // Function to get the currently selected date
+    private func getSelectedDate() -> Date? {
+        let calendar = Calendar.current
+        
+        // Create date components for the selected day
+        var dateComponents = DateComponents()
+        dateComponents.year = currentWeekYear
+        dateComponents.month = months.firstIndex(of: selectedMonth)! + 1
+        dateComponents.day = 1 // Default to first day
+        
+        return calendar.date(from: dateComponents)
+    }
+    
+    // Function to get appointments for a specific date
+    private func getAppointmentsForDate(_ date: Date) -> [Appointment]? {
+        let calendar = Calendar.current
+        let day = calendar.component(.day, from: date)
+        
+        return appointments.filter { $0.date == day }
+    }
+    
+    // Calendar day cell
+    private func calendarDayCell(day: Int, isCurrentMonth: Bool, hasAppointments: Bool) -> some View {
+        let calendar = Calendar.current
+        let currentDay = calendar.component(.day, from: Date())
+        let currentMonth = calendar.component(.month, from: Date())
+        let currentMonthName = DateFormatter().monthSymbols[currentMonth - 1]
+        
+        let isToday = isCurrentMonth && day == currentDay && 
+                      selectedMonth == currentMonthName
+        
+        return VStack(spacing: 4) {
+            Text("\(day)")
+                .font(.system(size: 14, weight: isToday ? .semibold : .regular))
+                .foregroundColor(
+                    isCurrentMonth 
+                        ? (isToday ? Color(hex: "#246BFD") : Color(hex: "#052017"))
+                        : Color(hex: "#C4C4C4")
+                )
+            
+            // Dot indicator for appointments
+            if hasAppointments && isCurrentMonth {
+                Circle()
+                    .fill(Color(hex: "#246BFD"))
+                    .frame(width: 4, height: 4)
+            } else {
+                Spacer()
+                    .frame(height: 4)
+            }
+        }
+        .frame(height: 48)
+        .background(
+            isToday ? 
+                Circle()
+                .stroke(Color(hex: "#246BFD"), lineWidth: 1)
+                .frame(width: 32, height: 32)
+                : nil
+        )
+        .onTapGesture {
+            if isCurrentMonth {
+                selectDay(day)
+                // Removed: showMonthPicker = false
+            }
+        }
+    }
+    
+    // Calendar appointment row
+    private func calendarAppointmentRow(appointment: Appointment) -> some View {
+        HStack(spacing: 12) {
+            Rectangle()
+                .fill(Color(hex: appointment.color))
+                .frame(width: 4, height: 40)
+                .cornerRadius(2)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(appointment.title)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(Color(hex: "#052017"))
+                
+                Text("\(appointment.startTime) - \(appointment.endTime) • \(appointment.clientName)")
+                    .font(.system(size: 12))
+                    .foregroundColor(Color(hex: "#5A7184"))
+            }
+            
+            Spacer()
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 16)
+        .background(Color.white)
+        .cornerRadius(8)
+        .shadow(color: Color.black.opacity(0.05), radius: 2, y: 1)
+        .padding(.horizontal, 16)
+    }
+    
     // MARK: - View Mode Selector (Redesigned)
     private var viewModeSelector: some View {
         HStack(spacing: 0) {
             ForEach(ViewMode.allCases, id: \.self) { mode in
                 Button(action: {
-                    withAnimation {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8, blendDuration: 0)) {
                         selectedViewMode = mode
                     }
                 }) {
                     Text(mode.rawValue)
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(selectedViewMode == mode ? .white : Color(hex: "#5A7184"))
+                        .foregroundColor(selectedViewMode == mode ? .white : Color(hex: "#1A1A1A"))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
-                        .background(
-                            selectedViewMode == mode ? 
-                                Color(hex: "#246BFD") : 
-                                Color.clear
-                        )
+                        .background(selectedViewMode == mode ? Color(hex: "#246BFD") : Color.clear)
+                        .cornerRadius(8)
+                        .animation(.spring(response: 0.3, dampingFraction: 0.8, blendDuration: 0), value: selectedViewMode)
                 }
             }
         }
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color(hex: "#F4F4F2"))
-        )
+        .padding(4)
+        .background(Color.gray.opacity(0.1))
+        .cornerRadius(12)
         .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.vertical, 8)
+        .background(Color.white)
     }
     
     // MARK: - Week Day Selector (Redesigned)
     private var weekDaySelector: some View {
         VStack(spacing: 0) {
-            // Week navigation controls
+            // Week date range display
             HStack {
-                // Previous week button
-                Button(action: {
-                    goToPreviousWeek()
-                }) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(Color(hex: "#246BFD"))
-                        .frame(width: 36, height: 36)
-                        .background(Color(hex: "#F4F4F2"))
-                        .clipShape(Circle())
-                }
-                
                 Spacer()
                 
-                // Week date range display
                 if !currentWeekDates.isEmpty {
                     let firstDay = currentWeekDays.first ?? 1
                     let lastDay = currentWeekDays.last ?? 7
                     
-                    Text("\(currentWeekMonth) \(firstDay)-\(lastDay), \(currentWeekYear)")
+                    Text("\(currentWeekMonth) \(firstDay)-\(lastDay), \(String(currentWeekYear))")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(Color(hex: "#5A7184"))
+                        .id("week-label-\(currentWeekIndex)")
                 }
                 
                 Spacer()
-                
-                // Next week button
-                Button(action: {
-                    goToNextWeek()
-                }) {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(Color(hex: "#246BFD"))
-                        .frame(width: 36, height: 36)
-                        .background(Color(hex: "#F4F4F2"))
-                        .clipShape(Circle())
-                }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
             
-            // Day selector
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 16) {
-                    ForEach(0..<currentWeekDays.count, id: \.self) { index in
-                        Button(action: {
-                            withAnimation {
-                                selectedDayIndex = index
+            // Carousel-style day selector
+            GeometryReader { geometry in
+                HStack(spacing: 0) {
+                    // This creates a true carousel effect with horizontal sliding
+                    TabView(selection: $currentWeekIndex) {
+                        ForEach(0..<weeksData.count, id: \.self) { weekIndex in
+                            weekView(for: weekIndex, width: geometry.size.width)
+                                .tag(weekIndex)
+                                .frame(width: geometry.size.width)
+                                .contentShape(Rectangle())
+                        }
+                    }
+                    .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                    // Add these modifiers to improve the paging behavior
+                    .animation(.easeInOut(duration: 0.3), value: currentWeekIndex)
+                    .id("weekTabView-\(weeksData.count)") // Force view refresh when data changes
+                    // Disable scrolling resistance for smoother transitions
+                    .environment(\.layoutDirection, .leftToRight)
+                    .onChange(of: currentWeekIndex) { newIndex in
+                        // Use withAnimation to ensure smooth transitions
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            setActiveWeek(index: newIndex)
+                        }
+                        
+                        // Check if we need to add more weeks
+                        let calendar = Calendar.current
+                        if newIndex == weeksData.count - 1 {
+                            // Add next week when we reach the end
+                            if let newStartDate = calendar.date(byAdding: .day, value: 7, to: weeksData.last!.startDate) {
+                                addWeekToCarousel(startDate: newStartDate)
                             }
-                        }) {
-                            VStack(spacing: 8) {
-                                // Day letter (S, M, T, etc.)
-                                if !currentWeekDates.isEmpty && index < currentWeekDates.count {
-                                    let date = currentWeekDates[index]
-                                    let dayLetter = String(Calendar.current.weekdaySymbols[Calendar.current.component(.weekday, from: date) - 1].prefix(1))
-                                    
-                                    Text(dayLetter)
-                                        .font(.system(size: 14, weight: .medium))
-                                        .foregroundColor(Color(hex: "#5A7184"))
-                                } else {
-                                    Text(weekdays[index % 7])
-                                        .font(.system(size: 14, weight: .medium))
-                                        .foregroundColor(Color(hex: "#5A7184"))
-                                }
-                                
-                                ZStack {
-                                    Circle()
-                                        .fill(index == selectedDayIndex ? Color(hex: "#246BFD") : Color.clear)
-                                        .frame(width: 40, height: 40)
-                                    
-                                    // Day number
-                                    if !currentWeekDays.isEmpty && index < currentWeekDays.count {
-                                        Text("\(currentWeekDays[index])")
-                                            .font(.system(size: 18, weight: .medium))
-                                            .foregroundColor(index == selectedDayIndex ? .white : Color(hex: "#1A2E3B"))
-                                    } else {
-                                        Text("\(index + 1)")
-                                            .font(.system(size: 18, weight: .medium))
-                                            .foregroundColor(index == selectedDayIndex ? .white : Color(hex: "#1A2E3B"))
+                        } else if newIndex == 0 {
+                            // Add previous week when we reach the beginning
+                            if let newStartDate = calendar.date(byAdding: .day, value: -7, to: weeksData[0].startDate) {
+                                addWeekToCarousel(startDate: newStartDate, addToBeginning: true)
+                                // Adjust currentWeekIndex to account for the new week
+                                // Use DispatchQueue to ensure this happens after the view updates
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    withAnimation(.easeInOut(duration: 0.3)) {
+                                        currentWeekIndex = 1
                                     }
                                 }
-                                
-                                // Indicator for days with appointments
-                                if !currentWeekDays.isEmpty && index < currentWeekDays.count && 
-                                   appointments.contains(where: { $0.date == currentWeekDays[index] }) {
-                                    Circle()
-                                        .fill(Color(hex: "#246BFD"))
-                                        .frame(width: 4, height: 4)
-                                } else {
-                                    Spacer()
-                                        .frame(height: 4)
-                                }
                             }
-                            .frame(width: 50)
-                            .padding(.vertical, 8)
                         }
                     }
                 }
-                .padding(.horizontal, 16)
             }
+            .frame(height: 80)
         }
         .background(Color.white)
         .padding(.vertical, 8)
+        .contentShape(Rectangle())
         .onAppear {
             initializeWeekDates()
         }
+    }
+    
+    // Helper function to create a week view for the carousel
+    private func weekView(for weekIndex: Int, width: CGFloat) -> some View {
+        guard weekIndex < weeksData.count else { return AnyView(EmptyView()) }
+        
+        let weekData = weeksData[weekIndex]
+        
+        return AnyView(
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(0..<weekData.days.count, id: \.self) { dayIndex in
+                        // Filter out weekends if showWeekends is false
+                        if showWeekends || (!showWeekends && !isWeekend(dayIndex: dayIndex, weekData: weekData)) {
+                            Button(action: {
+                                // Use withAnimation for smoother transitions
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    // Only update if this is the current week
+                                    if weekIndex == currentWeekIndex {
+                                        selectedDayIndex = dayIndex
+                                        
+                                        // Update selectedDate
+                                        if dayIndex < weekData.dates.count {
+                                            selectedDate = weekData.dates[dayIndex]
+                                        }
+                                    } else {
+                                        // If tapping a day in a different week, switch to that week first
+                                        currentWeekIndex = weekIndex
+                                        
+                                        // Use a slight delay to ensure the week transition completes first
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                            withAnimation(.easeInOut(duration: 0.2)) {
+                                                selectedDayIndex = dayIndex
+                                                if dayIndex < weekData.dates.count {
+                                                    selectedDate = weekData.dates[dayIndex]
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }) {
+                                VStack(spacing: 8) {
+                                    // Day letter (S, M, T, etc.)
+                                    if !weekData.dates.isEmpty && dayIndex < weekData.dates.count {
+                                        let date = weekData.dates[dayIndex]
+                                        let dayLetter = String(Calendar.current.weekdaySymbols[Calendar.current.component(.weekday, from: date) - 1].prefix(1))
+                                        
+                                        Text(dayLetter)
+                                            .font(.system(size: 14, weight: .medium))
+                                            .foregroundColor(Color(hex: "#5A7184"))
+                                    } else {
+                                        Text(weekdays[dayIndex % 7])
+                                            .font(.system(size: 14, weight: .medium))
+                                            .foregroundColor(Color(hex: "#5A7184"))
+                                    }
+                                    
+                                    ZStack {
+                                        // Background circle for selected day
+                                        Circle()
+                                            .fill(weekIndex == currentWeekIndex && dayIndex == selectedDayIndex ? 
+                                                  Color(hex: "#246BFD") : Color.clear)
+                                            .frame(width: 36, height: 36)
+                                        
+                                        // Today indicator (thin circle)
+                                        if !weekData.dates.isEmpty && dayIndex < weekData.dates.count {
+                                            let isToday = Calendar.current.isDateInToday(weekData.dates[dayIndex])
+                                            if isToday && !(weekIndex == currentWeekIndex && dayIndex == selectedDayIndex) {
+                                                Circle()
+                                                    .stroke(Color(hex: "#246BFD"), lineWidth: 1.5)
+                                                    .frame(width: 36, height: 36)
+                                            }
+                                        }
+                                        
+                                        // Day number
+                                        if !weekData.days.isEmpty && dayIndex < weekData.days.count {
+                                            Text("\(weekData.days[dayIndex])")
+                                                .font(.system(size: 16, weight: .medium))
+                                                .foregroundColor(weekIndex == currentWeekIndex && dayIndex == selectedDayIndex ? 
+                                                                .white : Color(hex: "#1A2E3B"))
+                                        } else {
+                                            Text("\(dayIndex + 1)")
+                                                .font(.system(size: 16, weight: .medium))
+                                                .foregroundColor(weekIndex == currentWeekIndex && dayIndex == selectedDayIndex ? 
+                                                                .white : Color(hex: "#1A2E3B"))
+                                        }
+                                    }
+                                    
+                                    // Indicator for days with appointments
+                                    if !weekData.days.isEmpty && dayIndex < weekData.days.count && 
+                                       appointments.contains(where: { $0.date == weekData.days[dayIndex] }) {
+                                        Circle()
+                                            .fill(Color(hex: "#246BFD"))
+                                            .frame(width: 4, height: 4)
+                                    } else {
+                                        Spacer()
+                                            .frame(height: 4)
+                                    }
+                                }
+                                .frame(width: 42)
+                                .padding(.vertical, 8)
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal, 8)
+                .frame(width: width)
+        }
+        )
+    }
+    
+    // Helper function to check if a day index represents a weekend
+    private func isWeekend(dayIndex: Int, weekData: WeekData) -> Bool {
+        guard dayIndex < weekData.dates.count else { return false }
+        let date = weekData.dates[dayIndex]
+        let weekday = Calendar.current.component(.weekday, from: date)
+        // weekday 1 = Sunday, weekday 7 = Saturday
+        return weekday == 1 || weekday == 7
+    }
+    
+    // Helper function to find the nearest weekday index
+    private func findNearestWeekdayIndex() -> Int {
+        guard !currentWeekDates.isEmpty else { return -1 }
+        
+        // Look for the nearest weekday (prefer forward direction, then backward)
+        for offset in 0..<currentWeekDates.count {
+            // Check forward
+            let forwardIndex = (selectedDayIndex + offset) % currentWeekDates.count
+            if forwardIndex < currentWeekDates.count {
+                let forwardDate = currentWeekDates[forwardIndex]
+                let forwardWeekday = Calendar.current.component(.weekday, from: forwardDate)
+                if forwardWeekday != 1 && forwardWeekday != 7 { // Not Sunday or Saturday
+                    return forwardIndex
+                }
+            }
+            
+            // Check backward (only if offset > 0 to avoid checking the same index twice)
+            if offset > 0 {
+                let backwardIndex = (selectedDayIndex - offset + currentWeekDates.count) % currentWeekDates.count
+                if backwardIndex >= 0 && backwardIndex < currentWeekDates.count {
+                    let backwardDate = currentWeekDates[backwardIndex]
+                    let backwardWeekday = Calendar.current.component(.weekday, from: backwardDate)
+                    if backwardWeekday != 1 && backwardWeekday != 7 { // Not Sunday or Saturday
+                        return backwardIndex
+                    }
+                }
+            }
+        }
+        
+        // Fallback to Monday (index 1) if no weekday found
+        return 1
     }
     
     // MARK: - Day View Content
@@ -875,26 +1417,29 @@ struct ScheduleView: View {
     private var listViewContent: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                // Date header
-                Text("July \(dates[selectedDayIndex]), 2025")
+                // Date header - Fixed to show the actual selected date
+                Text(selectedDateFormatted)
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(Color(hex: "#052017"))
                     .padding(.horizontal, 16)
                     .padding(.top, 16)
                 
-                if appointmentsForSelectedDay.isEmpty {
-                    // Empty state
+                // Check if we have any tasks to show
+                let hasTasks = !tasksForSelectedDay.isEmpty
+                
+                if !hasTasks {
+                    // Empty state - no tasks
                     VStack(spacing: 12) {
                         Image(systemName: "calendar.badge.clock")
                             .font(.system(size: 40))
                             .foregroundColor(Color(hex: "#5A7184").opacity(0.6))
                             .padding(.bottom, 8)
                         
-                        Text("No scheduled appointments")
+                        Text("No tasks scheduled")
                             .font(.system(size: 16, weight: .medium))
                             .foregroundColor(Color(hex: "#5A7184"))
                         
-                        Text("Tap the + button to create a new appointment")
+                        Text("Tap the + button to create a new task")
                             .font(.system(size: 14))
                             .foregroundColor(Color(hex: "#5A7184").opacity(0.8))
                             .multilineTextAlignment(.center)
@@ -902,59 +1447,103 @@ struct ScheduleView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 40)
                 } else {
-                    // List of appointments
-                    ForEach(appointmentsForSelectedDay) { appointment in
-                        listAppointmentRow(appointment: appointment)
+                    // Show tasks
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Tasks")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(Color(hex: "#052017"))
+                            .padding(.horizontal, 16)
+                        
+                        ForEach(tasksForSelectedDay) { task in
+                            listTaskRow(task: task)
                     }
                     .padding(.horizontal, 16)
+                    }
                 }
             }
             .padding(.bottom, 100) // Add padding for tab bar
         }
     }
     
-    // MARK: - List Appointment Row
-    private func listAppointmentRow(appointment: Appointment) -> some View {
+    // Computed property for formatted selected date
+    private var selectedDateFormatted: String {
+        if !currentWeekDates.isEmpty && selectedDayIndex < currentWeekDates.count {
+            let selectedDate = currentWeekDates[selectedDayIndex]
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "MMMM d, yyyy"
+            return dateFormatter.string(from: selectedDate)
+        } else {
+            return "No Date Selected"
+        }
+    }
+    
+    // MARK: - List Task Row
+    private func listTaskRow(task: Task) -> some View {
         Button(action: {
-            selectedAppointment = appointment
-            showAppointmentDetails = true
+            selectedTask = task
+            showTaskDetails = true
         }) {
             HStack(spacing: 12) {
-                // Time column
+                // Time column (if task has a specific time)
                 VStack(spacing: 4) {
-                    Text(appointment.startTime)
+                    if let dueDate = task.dueDate, !task.isAllDayTask {
+                        Text(formatTaskTime(dueDate))
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(Color(hex: "#052017"))
-                    
-                    Text(appointment.endTime)
-                        .font(.system(size: 14))
+                    } else {
+                        Text("All Day")
+                            .font(.system(size: 14, weight: .medium))
                         .foregroundColor(Color(hex: "#5A7184"))
+                    }
                 }
                 .frame(width: 60)
                 
-                // Vertical line
+                // Priority indicator line
                 Rectangle()
-                    .fill(Color(hex: appointment.color))
+                    .fill(Color(hex: priorityColor(for: task.priority)))
                     .frame(width: 4, height: 50)
                 
-                // Appointment details
+                // Task details
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(appointment.title)
+                    HStack {
+                        Text(task.title)
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(Color(hex: "#052017"))
                     
-                    Text(appointment.clientName)
+                        Spacer()
+                        
+                        // Completion indicator
+                        if task.status == "Completed" {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(Color(hex: "#4CAF50"))
+                                .font(.system(size: 16))
+                        }
+                    }
+                    
+                    Text(task.taskDescription)
                         .font(.system(size: 14))
                         .foregroundColor(Color(hex: "#5A7184"))
+                        .lineLimit(2)
                     
                     HStack(spacing: 4) {
-                        Image(systemName: "mappin.and.ellipse")
+                        Image(systemName: "person.circle")
                             .font(.system(size: 12))
                             .foregroundColor(Color(hex: "#5A7184"))
                         
-                        Text(appointment.location)
+                        Text(task.assignee)
                             .font(.system(size: 12))
                             .foregroundColor(Color(hex: "#5A7184"))
+                        
+                        Spacer()
+                        
+                        // Priority badge
+                        Text(task.priority)
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color(hex: priorityColor(for: task.priority)))
+                            .cornerRadius(4)
                     }
                 }
                 
@@ -970,28 +1559,29 @@ struct ScheduleView: View {
         }
     }
     
+    // Helper function to format task time
+    private func formatTaskTime(_ date: Date) -> String {
+        let timeFormatter = DateFormatter()
+        timeFormatter.dateFormat = "h:mm a"
+        return timeFormatter.string(from: date)
+    }
+    
     // MARK: - Map View Content
     private var mapViewContent: some View {
         VStack {
-            // Placeholder for map view
-            ZStack {
-                Color(hex: "#F8F8F6")
-                
-                VStack(spacing: 16) {
-                    Image(systemName: "map")
-                        .font(.system(size: 40))
-                        .foregroundColor(Color(hex: "#5A7184").opacity(0.6))
-                    
-                    Text("Map View")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(Color(hex: "#5A7184"))
-                    
-                    Text("Your scheduled appointments will appear here")
-                        .font(.system(size: 14))
-                        .foregroundColor(Color(hex: "#5A7184").opacity(0.8))
-                        .multilineTextAlignment(.center)
-                }
-            }
+            // Functional map view using MapKit with filtered POIs
+            AppointmentsMapView(appointments: appointmentsForSelectedDay)
+                .overlay(
+                    VStack {
+                        Spacer()
+                        Text("Showing \(appointmentsForSelectedDay.count) appointments")
+                            .font(.caption)
+                            .padding(8)
+                            .background(Color.white.opacity(0.8))
+                            .cornerRadius(8)
+                            .padding(.bottom, 16)
+                    }
+                )
         }
         .padding(.bottom, 100) // Add padding for tab bar
     }
@@ -1055,15 +1645,10 @@ struct ScheduleView: View {
                                 .foregroundColor(Color(hex: "#052017"))
                         }
                         
-                        // Placeholder for map
-                        Rectangle()
-                            .fill(Color(hex: "#F8F8F6"))
+                        // Functional map
+                        AppointmentLocationMapView(location: appointment.location)
                             .frame(height: 120)
                             .cornerRadius(8)
-                            .overlay(
-                                Text("Map placeholder")
-                                    .foregroundColor(Color(hex: "#5A7184"))
-                            )
                     }
                     .padding(16)
                     .background(Color.white)
@@ -1170,11 +1755,11 @@ struct ScheduleView: View {
                             .foregroundColor(Color(hex: "#052017"))
                             .padding(.horizontal, 16)
                         
-                        // Unscheduled appointments toggle
-                        toggleOption(
-                            title: "Show unscheduled appointments on map view",
-                            isOn: $showUnscheduledAppointments
-                        )
+                        // Removed unscheduled appointments toggle since it was related to map view
+                        // toggleOption(
+                        //     title: "Show unscheduled appointments on map view",
+                        //     isOn: $showUnscheduledAppointments
+                        // )
                         
                         // Show weekends toggle
                         toggleOption(

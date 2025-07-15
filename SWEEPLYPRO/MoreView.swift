@@ -469,6 +469,10 @@ struct TaskRow: View {
         .padding(16)
         .background(Color.white)
         .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(priorityColor(for: task.priority).opacity(0.7), lineWidth: 1.5)
+        )
         .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
         .contentShape(Rectangle())
         .onTapGesture {

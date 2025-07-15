@@ -2,10 +2,11 @@
 //  DashboardView.swift
 //  SWEEPLYPRO
 //
-//  Created on 7/2/25.
+//  Created on 7/6/25.
 //
 
 import SwiftUI
+import MapKit
 
 struct DashboardView: View {
     @State private var selectedTab = 0
@@ -18,25 +19,37 @@ struct DashboardView: View {
                     DashboardHeaderView()
                     
                     // Content sections
-                    VStack(spacing: 16) {
-                        // Today's Schedule section
+                    VStack(spacing: 8) {
+                        // Map view section (no horizontal padding, no top padding)
+                        DashboardMapView()
+                        
+                        // Today's Schedule section (restored)
                         TodayScheduleView()
-                            .padding(.top, 12)
+                            .padding(.horizontal, 8)
+                            .padding(.top, -30)
                         
                         // Daily Overview section
                         DailyOverviewView()
+                            .padding(.horizontal, 8)
+                            .padding(.top, 8)
                         
                         // To Do List section
                         ToDoListView()
+                            .padding(.horizontal, 8)
+                            .padding(.top, 8)
                         
                         // Business Health section
                         BusinessHealthView()
+                            .padding(.horizontal, 8)
+                            .padding(.top, 8)
                         
                         // Discover section
                         DiscoverView()
+                            .padding(.horizontal, 8)
+                            .padding(.top, 8)
                             .padding(.bottom, 120) // Reduced padding at the bottom
                     }
-                    .padding(.horizontal, 8)
+                    // Remove the overall horizontal padding
                 }
                 .background(Color(hex: "#F5F5F5"))
             }

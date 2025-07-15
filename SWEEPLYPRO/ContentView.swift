@@ -12,6 +12,7 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [Item]
     @State private var selectedTab = 0
+    @EnvironmentObject private var authManager: SupabaseAuthManager
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -34,6 +35,7 @@ struct ContentView: View {
                 
                 // More View
                 MoreView()
+                    .environmentObject(authManager)
                     .opacity(selectedTab == 4 ? 1 : 0)
                     .zIndex(selectedTab == 4 ? 1 : 0)
             }
